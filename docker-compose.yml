@@ -1,0 +1,13 @@
+version: '3'
+services:
+ #Nodejs
+  express-boilerplate:
+    build: .
+    image: iths/express-boilerplate
+    container_name: express-boilerplate
+    working_dir: /app
+    volumes:
+       - ./:/app
+    command: bash -c "yarn install; npm run dev"
+    ports:
+        - "3009:8080"
