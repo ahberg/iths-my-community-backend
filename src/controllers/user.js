@@ -1,8 +1,8 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import passport from "passport";
-
 import db from "../models";
+import {getUserPosts} from "./post"
+
 const User = db.User;
 
 // load input validation
@@ -117,13 +117,13 @@ const findAllUsers = (req, res) => {
     .catch((err) => res.status(500).json({ err }));
 };
 
-const currentUserInfo = (req, res) => {
+const currentUserInfo = async(req, res) => {
   const { id, username } = req.user;
   const payload = { id, username }; //jwt payload
   var user = req.user.dataValues;
   user.following = [];
   user.followers = [];
-  user.posts = [];
+  user.posts = await getUserPosts();
   user.profileImg = "/static/img/default-user-profile-img.png";
   user.userImg = "/static/img/default-user-profile-img.png";
 
