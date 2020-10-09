@@ -8,7 +8,6 @@ import {
   findById,
   update,
   deleteUser,
-  userPosts,
   currentUserInfo
 } from "../controllers/user";
 
@@ -67,11 +66,4 @@ module.exports = (app) => {
     deleteUser
   );
 
-  app.get(
-    "/api/user/posts",
-    passport.authenticate("jwt", {
-      session: false,
-    }),
-    userPosts
-  );
 };

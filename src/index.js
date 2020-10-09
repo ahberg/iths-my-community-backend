@@ -33,8 +33,8 @@ require('./config/passport')(passport);
 
 //default route
 app.get('/', (req, res) => res.send('Hello my World'));
-
 require('./routes/user.js')(app);
+require('./routes/post.js')(app);
 
 //create a server
 var server = app.listen(port, function() {

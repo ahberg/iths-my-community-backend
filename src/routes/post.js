@@ -1,27 +1,33 @@
 import passport from 'passport';
 import config from '../config/config';
 import { allowOnly } from '../services/routesHelper';
-import { create, login, findAllposts, 
-    findById, update, deletepost
-} from '../controllers/post';
+import { create, userPosts,findPostById }  from '../controllers/post';
 
 module.exports = (app) => {
   // create a new post
   app.post(
-    '/api/posts/create',
-    //passport.authenticate('jwt', { session: false }),
+    '/api/post',
+    passport.authenticate('jwt', { session: false }),
     create
   );
+  
 
-  // post login
-  app.post('/api/posts/login', login);
 
-  //retrieve all posts
   app.get(
-    '/api/posts', 
-    passport.authenticate('jwt', { 
-      session: false 
+    "/api/user/posts",
+    passport.authenticate("jwt", {
+      session: false,
     }),
-    findAllposts
+    userPosts
   );
-}
+
+  app.get(
+    '/api/post/:postId',
+    passport.authenticate('jwt', {
+      session:false
+    }),
+    findPostById
+  )
+
+
+};
