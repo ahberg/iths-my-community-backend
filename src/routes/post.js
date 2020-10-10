@@ -1,7 +1,7 @@
 import passport from 'passport';
 import config from '../config/config';
 import { allowOnly } from '../services/routesHelper';
-import { create, userPosts,findPostById }  from '../controllers/post';
+import { create, deletePost,userPosts,findPostById }  from '../controllers/post';
 
 module.exports = (app) => {
   // create a new post
@@ -19,6 +19,14 @@ module.exports = (app) => {
       session: false,
     }),
     userPosts
+  );
+
+  app.delete(
+    "/api/post/:postId",
+    passport.authenticate("jwt", {
+      session: false,
+    }),
+    deletePost
   );
 
   app.get(

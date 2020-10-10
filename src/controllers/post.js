@@ -6,34 +6,38 @@ const defaultFields = {
   likes: [],
 };
 
- const  create =  (req, res) => {
+const create = (req, res) => {
   let newPost = {
     author: req.user.id,
     content: req.body.content,
   };
-    Post.create(newPost)
+  Post.create(newPost)
     .then((post) => {
       let completePost = Object.assign(defaultFields, post.dataValues);
       res.json({ success: true, post: completePost });
     })
     .catch((err) => {
-      res.status(500).json({err})
+      res.status(500).json({ err });
     });
-  }
-  
-  const getUserPosts = async(req, res) => {
-    let posts = [];
-    posts = await Post.findAll({ order: [["id", "DESC"]],limit:10 })
-    return posts
-  };
-
- const userPosts = async(req, res) => {
-  let posts = [];
-  posts = await  getUserPosts()
-  res.json({success:true,posts:posts})
 };
 
+const deletePost = async (req, res) => {
+  const id = req.params.postId;
+  await Post.destroy({ where: { id } })
+  return res.json({success:true})
+};
 
+const getUserPosts = async (req, res) => {
+  let posts = [];
+  posts = await Post.findAll({ order: [["id", "DESC"]], limit: 10 });
+  return posts;
+};
+
+const userPosts = async (req, res) => {
+  let posts = [];
+  posts = await getUserPosts();
+  res.json({ success: true, posts: posts });
+};
 
 const findPostById = (req, res) => {
   const id = req.params.postId;
@@ -50,4 +54,4 @@ const findPostById = (req, res) => {
     .catch((err) => res.status(500).json({ err }));
 };
 
-export { create, userPosts, findPostById,getUserPosts };
+export { create, deletePost, userPosts, findPostById, getUserPosts };
