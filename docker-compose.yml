@@ -1,10 +1,10 @@
 version: '3'
 services:
  #Nodejs
-  express-boilerplate:
+  my-community-backend:
     build: .
-    image: iths/express-boilerplate
-    container_name: express-boilerplate
+    image: iths/my-community-backend
+    container_name: my-community-backend
     working_dir: /app
     volumes:
        - ./:/app
