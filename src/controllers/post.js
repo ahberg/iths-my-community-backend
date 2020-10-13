@@ -23,20 +23,22 @@ const create = (req, res) => {
 
 const deletePost = async (req, res) => {
   const id = req.params.postId;
-  await Post.destroy({ where: { id } })
+  await Post.detroy({ where: { id } })
   return res.json({success:true})
 };
 
-const getUserPosts = async (req, res) => {
+const getUserPosts = async (userId) => {
   let posts = [];
-  posts = await Post.findAll({ order: [["id", "DESC"]], limit: 10 });
+  posts = await Post.findAll({ where: {author: userId}, order: [["id", "DESC"]], limit: 10 });
   return posts;
 };
 
+
 const userPosts = async (req, res) => {
   let posts = [];
-  posts = await getUserPosts();
-  res.json({ success: true, posts: posts });
+  let user = req.user.username
+  posts = await getUserPosts(req.user.id);
+  res.json({ success: true, posts: posts});
 };
 
 const findPostById = (req, res) => {

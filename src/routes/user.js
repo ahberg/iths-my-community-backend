@@ -5,7 +5,7 @@ import {
   create,
   login,
   findAllUsers,
-  findById,
+  userInfoByUsername,
   update,
   deleteUser,
   currentUserInfo
@@ -41,11 +41,11 @@ module.exports = (app) => {
 
   // retrieve user by id
   app.get(
-    "/api/users/:userId",
+    "/api/users/:username",
     passport.authenticate("jwt", {
       session: false,
     }),
-    findById
+    userInfoByUsername
   );
 
   // update a user with id

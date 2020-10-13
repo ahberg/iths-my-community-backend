@@ -1,7 +1,7 @@
 import passport from 'passport';
 import config from '../config/config';
 import { allowOnly } from '../services/routesHelper';
-import { create, deletePost,userPosts,findPostById }  from '../controllers/post';
+import { create, deletePost,userPosts,findPostById}  from '../controllers/post';
 
 module.exports = (app) => {
   // create a new post

@@ -1,13 +1,21 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import db from "../models";
-import {getUserPosts} from "./post"
+import { getUserPosts } from "./post";
 
 const User = db.User;
 
 // load input validation
 import validateRegisterForm from "../validation/register";
 import validateLoginForm from "../validation/login";
+
+
+const defaultValues = {
+  following: [],
+  followers: [],
+  profileImg: "/static/img/default-user-profile-img.png",
+  userImg: "/static/img/default-user-bkg-img.jpg",
+};
 
 const getPasswordHash = (password) => {
   const salt = bcrypt.genSaltSync(10);
@@ -109,21 +117,26 @@ const login = (req, res) => {
 };
 
 // fetch all users
-const findAllUsers = (req, res) => {
-  User.findAll()
-    .then((user) => {
-      res.json({ user });
-    })
-    .catch((err) => res.status(500).json({ err }));
+const findAllUsers = async(req, res) => {
+const search = {
+  raw : true   
+}
+let results = await User.findAll(search)
+let users = results
+users.forEach((u) => {
+ Object.assign(u,defaultValues)
+})
+res.json({success:true,users:users})
+    
 };
 
-const currentUserInfo = async(req, res) => {
+const currentUserInfo = async (req, res) => {
   const { id, username } = req.user;
   const payload = { id, username }; //jwt payload
   var user = req.user.dataValues;
   user.following = [];
   user.followers = [];
-  user.posts = await getUserPosts();
+  user.posts = await getUserPosts(id);
   user.profileImg = "/static/img/default-user-profile-img.png";
   user.userImg = "/static/img/default-user-profile-img.png";
 
@@ -145,40 +158,38 @@ const currentUserInfo = async(req, res) => {
 };
 
 // fetch user by userId
-const findById = (req, res) => {
-  const id = req.params.userId;
+const userInfoByUsername = async(req, res) => {
+  const username = req.params.username;
+   
+    let user = await  User.findOne({ where: { username }, raw : true    })
+    if (user == null) {
+      return res.json({ success:false, msg: `user ${username} not found` });
+    }
+   let posts = await getUserPosts(user.id)
+    Object.assign(user,defaultValues)
+    user.posts = posts
+    res.json({success:true,user: user});
 
-  User.findAll({ where: { id } })
-    .then((user) => {
-      if (!user.length) {
-        return res.json({ msg: "user not found" });
-      }
-      res.json({ user });
-    })
-    .catch((err) => res.status(500).json({ err }));
+
 };
 
 // update a user's info
 const update = (req, res) => {
-  let fields = {}
+  let fields = {};
   const id = req.params.userId;
 
-  if(typeof(req.body.name) != "undefined" ){
-    fields.name = req.body.name
-  } 
-  if(typeof(req.body.bio) != "undefined" ) {
-    fields.bio = req.body.bio
+  if (typeof req.body.name != "undefined") {
+    fields.name = req.body.name;
   }
-  if(typeof(req.body.password) != 'undefined'){
-    fields.password = getPasswordHash(req.body.password)
-  } 
+  if (typeof req.body.bio != "undefined") {
+    fields.bio = req.body.bio;
+  }
+  if (typeof req.body.password != "undefined") {
+    fields.password = getPasswordHash(req.body.password);
+  }
 
-  
-  User.update(
-    fields,
-    { where: { id } }
-  )
-    .then((user) => res.status(200).json({message: 'User updated'}))
+  User.update(fields, { where: { id } })
+    .then((user) => res.status(200).json({ message: "User updated" }))
     .catch((err) => res.status(500).json({ err }));
 };
 
@@ -201,7 +212,7 @@ export {
   create,
   login,
   findAllUsers,
-  findById,
+  userInfoByUsername,
   update,
   deleteUser,
   userPosts,
