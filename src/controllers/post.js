@@ -23,7 +23,7 @@ const create = (req, res) => {
 
 const deletePost = async (req, res) => {
   const id = req.params.postId;
-  await Post.detroy({ where: { id } })
+  await Post.destroy({ where: { id } })
   return res.json({success:true})
 };
 
@@ -36,7 +36,6 @@ const getUserPosts = async (userId) => {
 
 const userPosts = async (req, res) => {
   let posts = [];
-  let user = req.user.username
   posts = await getUserPosts(req.user.id);
   res.json({ success: true, posts: posts});
 };

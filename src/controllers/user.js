@@ -22,6 +22,18 @@ const getPasswordHash = (password) => {
   return bcrypt.hashSync(password, salt);
 };
 
+const generateAuthToken = async(payload)  => {
+ let token = await jwt.sign(
+    payload,
+    process.env.SECRET,
+    {
+      expiresIn: 36000,
+    })
+  console.log(token)
+   return `Bearer ${token}`
+   
+}
+
 // create user
 const create = (req, res) => {
   const { errors, isValid } = validateRegisterForm(req.body);
@@ -58,7 +70,7 @@ const create = (req, res) => {
   });
 };
 
-const login = (req, res) => {
+const login = async(req, res) => {
   const { errors, isValid } = validateLoginForm(req.body);
 
   // check validation
@@ -73,7 +85,7 @@ const login = (req, res) => {
       username,
     },
   })
-    .then((user) => {
+    .then(async(user) => {
       //check for user
       if (!user.length) {
         errors.username = "User not found!";
@@ -84,28 +96,18 @@ const login = (req, res) => {
       //check for password
       bcrypt
         .compare(password, originalPassword)
-        .then((isMatch) => {
+        .then(async(isMatch) => {
           if (isMatch) {
             // user matched
             console.log("matched!");
             const { id, username } = user[0].dataValues;
             const payload = { id, username }; //jwt payload
-            // console.log(payload)
-            jwt.sign(
-              payload,
-              "secret",
-              {
-                expiresIn: 36000,
-              },
-              (err, token) => {
-                user[0].password = "";
-                res.json({
-                  success: true,
-                  token: "Bearer " + token,
-                  user: user[0],
-                });
-              }
-            );
+            let token = await generateAuthToken(payload);        
+              res.json({
+                success: true,
+                token: token,
+                user: user[0],
+              })
           } else {
             errors.password = "Password not correct";
             return res.status(400).json(errors);
@@ -134,27 +136,16 @@ const currentUserInfo = async (req, res) => {
   const { id, username } = req.user;
   const payload = { id, username }; //jwt payload
   var user = req.user.dataValues;
-  user.following = [];
-  user.followers = [];
   user.posts = await getUserPosts(id);
-  user.profileImg = "/static/img/default-user-profile-img.png";
-  user.userImg = "/static/img/default-user-profile-img.png";
+  Object.assign(user,defaultValues)
 
-  // console.log(payload)
-  jwt.sign(
-    payload,
-    "secret",
-    {
-      expiresIn: 36000,
-    },
-    (err, token) => {
-      res.json({
-        success: true,
-        token: "Bearer " + token,
-        user: user,
-      });
-    }
-  );
+  let token = await generateAuthToken(payload);        
+  res.json({
+    success: true,
+    token: token,
+    user: user,
+  })
+
 };
 
 // fetch user by userId
