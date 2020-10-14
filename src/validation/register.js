@@ -16,6 +16,10 @@ function validateRegisterForm(data) {
     errors.username = 'username field is required';
   }
 
+  if (!Validator.isLowercase(data.username)) {
+    errors.username = 'username must be in lowecase';
+  }
+
   if (Validator.isEmpty(data.password)) {
     errors.password = 'password field is required';
   }

@@ -29,7 +29,6 @@ const generateAuthToken = async(payload)  => {
     {
       expiresIn: 36000,
     })
-  console.log(token)
    return `Bearer ${token}`
    
 }
@@ -37,21 +36,23 @@ const generateAuthToken = async(payload)  => {
 // create user
 const create = (req, res) => {
   const { errors, isValid } = validateRegisterForm(req.body);
-  let { username, name, password } = req.body;
+  let { username, name, password,bio } = req.body;
 
   // check validation
   if (!isValid) {
-    return res.status(400).json(errors);
-  }
+    let message = Object.values(errors)[0]
+    return res.status(400).json({success:false ,message:message });
+  } 
 
   User.findAll({ where: { username } }).then((user) => {
     if (user.length) {
-      return res.status(400).json({ message: "Username already exists!" });
+      return res.status(400).json({ success: false,message: "Username already exists!" });
     } else {
       let newUser = {
         username,
         name,
         password,
+        bio,
       };
       bcrypt.genSalt(10, (err, salt) => {
         bcrypt.hash(newUser.password, salt, (err, hash) => {
@@ -59,10 +60,10 @@ const create = (req, res) => {
           newUser.password = hash;
           User.create(newUser)
             .then((user) => {
-              res.json({ user });
+              res.json({success:true, user:user});
             })
             .catch((err) => {
-              res.status(500).json({ err });
+              res.status(500).json({success:false ,message:err });
             });
         });
       });
@@ -88,7 +89,7 @@ const login = async(req, res) => {
     .then(async(user) => {
       //check for user
       if (!user.length) {
-        errors.username = "User not found!";
+        errors.message = "User not found!";
         return res.status(404).json(errors);
       }
 
@@ -109,7 +110,7 @@ const login = async(req, res) => {
                 user: user[0],
               })
           } else {
-            errors.password = "Password not correct";
+            errors.message = "Password not correct";
             return res.status(400).json(errors);
           }
         })
