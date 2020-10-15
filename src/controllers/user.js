@@ -100,7 +100,6 @@ const login = async(req, res) => {
         .then(async(isMatch) => {
           if (isMatch) {
             // user matched
-            console.log("matched!");
             const { id, username } = user[0].dataValues;
             const payload = { id, username }; //jwt payload
             let token = await generateAuthToken(payload);        
@@ -121,7 +120,12 @@ const login = async(req, res) => {
 
 // fetch all users
 const findAllUsers = async(req, res) => {
+const Op = require("sequelize").Op
 const search = {
+  where: {
+    id: {
+      [Op.ne]: req.user.id}
+    },
   raw : true   
 }
 let results = await User.findAll(search)

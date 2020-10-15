@@ -27,6 +27,9 @@ function validateRegisterForm(data) {
   if (!Validator.isLength(data.password, { min: 6, max: 30 })) {
     errors.password = 'password must be at least 6 characters long';
   }
+  if(data.spamlock !== '10') {
+    errors.spamlock = 'captcha failed';
+  }
 
   return {
     errors,
