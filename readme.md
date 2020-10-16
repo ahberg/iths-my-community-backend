@@ -1,4 +1,4 @@
-#  M ycommunity backend
+#  My community backend
 
 ## This is a basic boilerplate for backend development with node and express
 
