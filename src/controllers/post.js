@@ -27,16 +27,21 @@ const deletePost = async (req, res) => {
   return res.json({success:true})
 };
 
-const getUserPosts = async (userId) => {
+const getUserPosts = async (userId,following = []) => {
   let posts = [];
-  posts = await Post.findAll({ where: {author: userId}, order: [["id", "DESC"]], limit: 10 });
+  following.push(userId);
+  posts = await Post.findAll({ where: {author: following}, order: [["id", "DESC"]], limit: 10 });
   return posts;
 };
 
 
 const userPosts = async (req, res) => {
   let posts = [];
-  posts = await getUserPosts(req.user.id);
+  const query = {where:{ownerId: req.user.id},attributes:['targetId']}
+  let following = await db.Follower.findAll(query)
+  following = following.map( f => f.targetId)
+  
+  posts = await getUserPosts(req.user.id,following);
   res.json({ success: true, posts: posts});
 };
 

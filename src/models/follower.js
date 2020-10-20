@@ -15,6 +15,7 @@ export default (sequelize, DataTypes) => {
         allowNull: false,
         primaryKey: true,
       },
+      as: "owner",
     });
     Follower.belongsTo(models.User, {
       foreignKey: {
@@ -22,7 +23,7 @@ export default (sequelize, DataTypes) => {
         allowNull: false,
         primaryKey: true,
       },
-      as: "follow",
+      as: "target",
     });
   };
 

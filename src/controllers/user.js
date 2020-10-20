@@ -11,8 +11,9 @@ import validateLoginForm from "../validation/login";
 
 
 const defaultValues = {
-  following: [],
+ // following: [],
   followers: [],
+  password: "",
   profileImg: "/static/img/default-user-profile-img.png",
   userImg: "/static/img/default-user-bkg-img.jpg",
 };
@@ -140,9 +141,12 @@ res.json({success:true,users:users})
 };
 
 const currentUserInfo = async (req, res) => {
-  const { id, username } = req.user;
+  let user = req.user.dataValues
+  const { id, username } = user;
   const payload = { id, username }; //jwt payload
-  const user = req.user.dataValues;
+  const query = {where:{ownerId: id},attributes:['targetId']}
+  let following = await db.Follower.findAll(query)
+  user.following = following.map( f => f.targetId)  
   user.posts = await getUserPosts(id);
   Object.assign(user,defaultValues)
 
@@ -164,6 +168,9 @@ const userInfoByUsername = async(req, res) => {
       return res.json({ success:false, msg: `user ${username} not found` });
     }
    let posts = await getUserPosts(user.id)
+   const query = {where:{ownerId: user.id},attributes:['targetId']}
+   let following = await db.Follower.findAll(query)
+   user.following = following.map( f => f.targetId)  
     Object.assign(user,defaultValues)
     user.posts = posts
     res.json({success:true,user: user});
