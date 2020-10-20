@@ -81,32 +81,34 @@ const login = async(req, res) => {
 
   const { username, password } = req.body;
 
-  User.findAll({
+  User.findOne({
     where: {
       username,
     },
   })
     .then(async(user) => {
       //check for user
-      if (!user.length) {
+      if (!user) {
         errors.message = "User not found!";
         return res.status(404).json(errors);
       }
 
-      let originalPassword = user[0].dataValues.password;
+      let originalPassword = user.dataValues.password;
       //check for password
       bcrypt
         .compare(password, originalPassword)
         .then(async(isMatch) => {
           if (isMatch) {
             // user matched
-            const { id, username } = user[0].dataValues;
+            user = user.dataValues
+            const { id, username } = user;
             const payload = { id, username }; //jwt payload
+            Object.assign(user,defaultValues);
             let token = await generateAuthToken(payload);        
               res.json({
                 success: true,
                 token: token,
-                user: user[0],
+                user: user,
               })
           } else {
             errors.message = "Password not correct";
@@ -140,7 +142,7 @@ res.json({success:true,users:users})
 const currentUserInfo = async (req, res) => {
   const { id, username } = req.user;
   const payload = { id, username }; //jwt payload
-  var user = req.user.dataValues;
+  const user = req.user.dataValues;
   user.posts = await getUserPosts(id);
   Object.assign(user,defaultValues)
 
