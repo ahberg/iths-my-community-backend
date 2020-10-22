@@ -101,16 +101,8 @@ const login = async(req, res) => {
         .then(async(isMatch) => {
           if (isMatch) {
             // user matched
-            user = user.dataValues
-            const { id, username } = user;
-            const payload = { id, username }; //jwt payload
-            Object.assign(user,defaultValues);
-            let token = await generateAuthToken(payload);        
-              res.json({
-                success: true,
-                token: token,
-                user: user,
-              })
+            req.user = user
+            return await currentUserInfo(req,res)
           } else {
             errors.message = "Password not correct";
             return res.status(400).json(errors);
@@ -141,12 +133,26 @@ res.json({success:true,users:users})
 };
 
 const currentUserInfo = async (req, res) => {
-  let user = req.user.dataValues
+  let user =  req.user.dataValues
   const { id, username } = user;
   const payload = { id, username }; //jwt payload
-  const query = {where:{ownerId: id},attributes:['targetId']}
+  const query = {
+    raw:true,
+    where:{ownerId: id},
+    attributes:[
+      ['targetId','id'],
+      'target.username',
+      'target.name'
+    ],
+    include: [{
+      model: User,
+      as:'target',
+      attributes:[],
+    
+    }],
+  }
   let following = await db.Follower.findAll(query)
-  user.following = following.map( f => f.targetId)  
+  user.following =  following  
   user.posts = await getUserPosts(id);
   Object.assign(user,defaultValues)
 
@@ -171,9 +177,9 @@ const userInfoByUsername = async(req, res) => {
    const query = {where:{ownerId: user.id},attributes:['targetId']}
    let following = await db.Follower.findAll(query)
    user.following = following.map( f => f.targetId)  
-    Object.assign(user,defaultValues)
-    user.posts = posts
-    res.json({success:true,user: user});
+   Object.assign(user,defaultValues)
+   user.posts = posts
+   res.json({success:true,user: user});
 
 
 };

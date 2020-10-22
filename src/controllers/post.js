@@ -39,6 +39,7 @@ const userPosts = async (req, res) => {
   let posts = [];
   const query = {where:{ownerId: req.user.id},attributes:['targetId']}
   let following = await db.Follower.findAll(query)
+ 
   following = following.map( f => f.targetId)
   
   posts = await getUserPosts(req.user.id,following);
