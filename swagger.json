@@ -1,0 +1,560 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "my-community-backend",
+    "version": "1.0.0",
+    "license": {
+      "name": "MIT"
+    },
+    "description": "Specification JSONs: [v2](/api-spec/v2), [v3](/api-spec/v3)."
+  },
+  "paths": {
+    "/": {
+      "get": {
+        "summary": "/",
+        "responses": {},
+        "tags": []
+      }
+    },
+    "/api/user": {
+      "post": {
+        "summary": "/api/user",
+        "responses": {},
+        "tags": []
+      }
+    },
+    "/api/user/login": {
+      "post": {
+        "summary": "/api/user/login",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "token": {
+                      "type": "string",
+                      "example": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MiwidXNlcm5hbWUiOiJhbnRvbiIsImlhdCI6MTYwMzc5MDYzMiwiZXhwIjoxNjAzODI2NjMyfQ.mj9ybRaRw9HJMxfyD5NvX0Of0AHorXvuTteLeBte60o"
+                    },
+                    "user": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "number",
+                          "example": 2
+                        },
+                        "username": {
+                          "type": "string",
+                          "example": "test"
+                        },
+                        "name": {
+                          "type": "string",
+                          "example": "Test"
+                        },
+                        "password": {
+                          "type": "string",
+                          "example": "******"
+                        },
+                        "bio": {
+                          "example": null,
+                          "nullable": true
+                        },
+                        "createdAt": {
+                          "type": "string",
+                          "example": "2020-10-15T14:11:45.000Z"
+                        },
+                        "updatedAt": {
+                          "type": "string",
+                          "example": "2020-10-15T14:11:45.000Z"
+                        },
+                        "following": {
+                          "type": "array",
+                          "items": {},
+                          "example": [
+                            null
+                          ]
+                        },
+                        "posts": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "number"
+                              },
+                              "content": {
+                                "type": "string"
+                              },
+                              "createdAt": {
+                                "type": "string"
+                              },
+                              "updatedAt": {
+                                "type": "string"
+                              },
+                              "author": {
+                                "type": "number"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "content",
+                              "createdAt",
+                              "updatedAt",
+                              "author"
+                            ]
+                          },
+                          "example": [
+                            {
+                              "id": 19,
+                              "content": "Hej Hej",
+                              "createdAt": "2020-10-26T13:13:21.000Z",
+                              "updatedAt": "2020-10-26T13:13:21.000Z",
+                              "author": 2
+                            }
+                          ]
+                        },
+                        "followers": {
+                          "type": "array",
+                          "items": {},
+                          "example": [
+                            null
+                          ]
+                        },
+                        "profileImg": {
+                          "type": "string",
+                          "example": "/static/img/default-user-profile-img.png"
+                        },
+                        "userImg": {
+                          "type": "string",
+                          "example": "/static/img/default-user-bkg-img.jpg"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Password not correct"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": []
+      }
+    },
+    "/api/user/info": {
+      "get": {
+        "summary": "/api/user/info",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "token": {
+                      "type": "string",
+                      "example": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MiwidXNlcm5hbWUiOiJhbnRvbiIsImlhdCI6MTYwMzc5MDYzMiwiZXhwIjoxNjAzODI2NjMyfQ.mj9ybRaRw9HJMxfyD5NvX0Of0AHorXvuTteLeBte60o"
+                    },
+                    "user": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "number",
+                          "example": 2
+                        },
+                        "username": {
+                          "type": "string",
+                          "example": "test"
+                        },
+                        "name": {
+                          "type": "string",
+                          "example": "Test"
+                        },
+                        "password": {
+                          "type": "string",
+                          "example": "******"
+                        },
+                        "bio": {
+                          "example": null,
+                          "nullable": true
+                        },
+                        "createdAt": {
+                          "type": "string",
+                          "example": "2020-10-15T14:11:45.000Z"
+                        },
+                        "updatedAt": {
+                          "type": "string",
+                          "example": "2020-10-15T14:11:45.000Z"
+                        },
+                        "following": {
+                          "type": "array",
+                          "items": {},
+                          "example": [
+                            null
+                          ]
+                        },
+                        "posts": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "number"
+                              },
+                              "content": {
+                                "type": "string"
+                              },
+                              "createdAt": {
+                                "type": "string"
+                              },
+                              "updatedAt": {
+                                "type": "string"
+                              },
+                              "author": {
+                                "type": "number"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "content",
+                              "createdAt",
+                              "updatedAt",
+                              "author"
+                            ]
+                          },
+                          "example": [
+                            {
+                              "id": 19,
+                              "content": "Hej Hej",
+                              "createdAt": "2020-10-26T13:13:21.000Z",
+                              "updatedAt": "2020-10-26T13:13:21.000Z",
+                              "author": 2
+                            }
+                          ]
+                        },
+                        "followers": {
+                          "type": "array",
+                          "items": {},
+                          "example": [
+                            null
+                          ]
+                        },
+                        "profileImg": {
+                          "type": "string",
+                          "example": "/static/img/default-user-profile-img.png"
+                        },
+                        "userImg": {
+                          "type": "string",
+                          "example": "/static/img/default-user-bkg-img.jpg"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": ""
+          }
+        },
+        "tags": []
+      }
+    },
+    "/api/users": {
+      "get": {
+        "summary": "/api/users",
+        "responses": {
+          "304": {
+            "description": ""
+          }
+        },
+        "tags": []
+      }
+    },
+    "/api/users/{username}": {
+      "get": {
+        "summary": "/api/users/{username}",
+        "parameters": [
+          {
+            "name": "username",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "304": {
+            "description": ""
+          }
+        },
+        "tags": []
+      }
+    },
+    "/api/users/{userId}": {
+      "put": {
+        "summary": "/api/users/{userId}",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {},
+        "tags": []
+      },
+      "delete": {
+        "summary": "/api/users/{userId}",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {},
+        "tags": []
+      }
+    },
+    "/api/post": {
+      "post": {
+        "summary": "/api/post",
+        "responses": {},
+        "tags": []
+      }
+    },
+    "/api/user/posts": {
+      "get": {
+        "summary": "/api/user/posts",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "posts": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "number"
+                          },
+                          "content": {
+                            "type": "string"
+                          },
+                          "createdAt": {
+                            "type": "string"
+                          },
+                          "updatedAt": {
+                            "type": "string"
+                          },
+                          "author": {
+                            "type": "number"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "content",
+                          "createdAt",
+                          "updatedAt",
+                          "author"
+                        ]
+                      },
+                      "example": [
+                        {
+                          "id": 20,
+                          "content": "I use an ICL keyboard.",
+                          "createdAt": "2020-10-27T09:24:58.000Z",
+                          "updatedAt": "2020-10-27T09:24:58.000Z",
+                          "author": 2
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "304": {
+            "description": ""
+          }
+        },
+        "tags": []
+      }
+    },
+    "/api/post/{postId}": {
+      "delete": {
+        "summary": "/api/post/{postId}",
+        "parameters": [
+          {
+            "name": "postId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": []
+      },
+      "get": {
+        "summary": "/api/post/{postId}",
+        "parameters": [
+          {
+            "name": "postId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {},
+        "tags": []
+      }
+    },
+    "/api/follow/{targetUserId}": {
+      "post": {
+        "summary": "/api/follow/{targetUserId}",
+        "parameters": [
+          {
+            "name": "targetUserId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "follow": {
+                      "type": "object",
+                      "properties": {
+                        "ownerId": {
+                          "type": "number",
+                          "example": 2
+                        },
+                        "targetId": {
+                          "type": "string",
+                          "example": "1"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": []
+      },
+      "delete": {
+        "summary": "/api/follow/{targetUserId}",
+        "parameters": [
+          {
+            "name": "targetUserId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "follow": {
+                      "type": "boolean",
+                      "example": false
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": []
+      }
+    }
+  },
+  "tags": []
+}
