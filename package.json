@@ -12,9 +12,8 @@
   },
   "license": "MIT",
   "dependencies": {
-    "babel-cli": "6.26.0",
-    "babel-preset-env": "1.7.0",
     "bcryptjs": "^2.4.3",
+    "core-js": "^3.6.5",
     "cors": "^2.8.5",
     "dotenv": "^8.2.0",
     "ejs": "^2.6.1",
@@ -28,19 +27,23 @@
     "passport-jwt": "^4.0.0",
     "passport-local": "^1.0.0",
     "sequelize": "^5.7.1",
-    "validator": "^10.11.0"
+    "validator": "^10.11.0",
+    "serverless-http": "^2.6.0"
   },
   "devDependencies": {
-    "babel-core": "^6.0.20",
-    "babel-polyfill": "^6.0.16",
-    "babel-preset-es2015": "^6.0.15",
-    "babel-preset-stage-0": "^6.0.15",
+    "@babel/cli": "^7.12.1",
+    "@babel/core": "^7.12.3",
+    "@babel/node": "^7.12.1",
+    "@babel/preset-env": "^7.12.1",
+    "@babel/register": "^7.12.1",
+    "babel-loader": "^8.1.0",
     "eslint-config-prettier": "^4.1.0",
     "eslint-plugin-import": "^2.17.2",
     "eslint-plugin-prettier": "^3.0.1",
     "nodemon": "^2.0.4",
     "serverless-dotenv-plugin": "^3.1.0",
-    "serverless-http": "^2.6.0",
-    "serverless-vpc-discovery": "^1.0.14"
+    "serverless-vpc-discovery": "^1.0.14",
+    "webpack": "^5.3.2",
+    "webpack-cli": "^4.1.0"
   }
 }

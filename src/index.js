@@ -1,5 +1,4 @@
-require("babel-core/register");
-require("babel-polyfill");
+
 import express from 'express';
 import passport from 'passport';
 import bodyParser from 'body-parser';

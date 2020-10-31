@@ -1,6 +1,15 @@
 {
     "presets": [
-        "env"
-    ],
-    "plugins": ["transform-async-to-generator"]
+        [
+            "@babel/preset-env",
+            {
+                "debug": true,
+                "useBuiltIns": "usage",
+                "corejs": 3,
+                "targets": {
+                    "node": "current"
+                  }
+            }
+        ]
+    ]
 }
