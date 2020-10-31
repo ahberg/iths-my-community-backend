@@ -5,6 +5,7 @@ import passport from 'passport';
 import bodyParser from 'body-parser';
 import cors from 'cors';
 import models from './models'
+import serverlessHttp from 'serverless-http'
 
 const app = express();
 
@@ -39,9 +40,13 @@ require('./routes/user.js')(app);
 require('./routes/post.js')(app);
 require('./routes/follow.js')(app);
 //create a server
-var server = app.listen(port, function() {
-  var host = server.address().address;
-  var port = server.address().port;
 
-  console.log('App listening at http://%s:%s', host, port);
-});
+if(process.env.NODE_ENV === 'development') {
+  var server = app.listen(port, function() {
+    var host = server.address().address;
+    var port = server.address().port;
+    console.log('App listening at http://%s:%s', host, port);
+  });
+} else {
+  exports.handler = serverlessHttp(app)
+}

@@ -38,6 +38,9 @@
     "eslint-config-prettier": "^4.1.0",
     "eslint-plugin-import": "^2.17.2",
     "eslint-plugin-prettier": "^3.0.1",
-    "nodemon": "^2.0.4"
+    "nodemon": "^2.0.4",
+    "serverless-dotenv-plugin": "^3.1.0",
+    "serverless-http": "^2.6.0",
+    "serverless-vpc-discovery": "^1.0.14"
   }
 }

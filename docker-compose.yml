@@ -8,6 +8,8 @@ services:
     working_dir: /app
     volumes:
        - ./:/app
-    command: bash -c "yarn install; npm run dev"
+    command: bash -c "yarn install; yarn run dev"
+    env_file: 
+      - ./.env.docker
     ports:
         - "3009:8080"

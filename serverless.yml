@@ -1,0 +1,36 @@
+# serverless.yml
+
+service: my-community
+
+provider:
+  name: aws
+  runtime: nodejs12.x
+  region: eu-north-1
+  stage: prod
+  httpApi:
+    cors: true
+  
+plugins:
+   - serverless-vpc-discovery
+   - serverless-dotenv-plugin
+    
+custom:
+  dotenv:
+    path: '.env.prod.lambda'
+    required:
+      file: true
+  vpc:
+    vpcName: 'my-lambda-vpc'
+    subnetNames:
+      - '1'
+      - '2'
+      - '3'
+    securityGroupNames:
+      - 'my-lambda'
+
+functions:
+  app:
+    handler: src/index.handler
+    events:
+      - http: ANY /
+      - http: 'ANY {proxy+}'
