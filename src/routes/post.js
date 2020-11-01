@@ -3,7 +3,7 @@ import config from '../config/config';
 import { allowOnly } from '../services/routesHelper';
 import { create, deletePost,userPosts,findPostById}  from '../controllers/post';
 
-module.exports = (app) => {
+export default (app) => {
   // create a new post
   app.post(
     '/api/post',

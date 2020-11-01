@@ -5,13 +5,14 @@
   "scripts": {
     "clean": "rm -rf build && mkdir build",
     "dev": "nodemon --exec babel-node src/index.js",
-    "build-server": "babel -d ./build ./src -s",
+    "build-server": "webpack",
     "build": "npm run clean && npm run build-server",
     "start": "node ./build/index.js",
     "debug": "node --debug ./build/index.js"
   },
   "license": "MIT",
   "dependencies": {
+    "@babel/runtime": "^7.12.1",
     "bcryptjs": "^2.4.3",
     "core-js": "^3.6.5",
     "cors": "^2.8.5",
@@ -27,13 +28,14 @@
     "passport-jwt": "^4.0.0",
     "passport-local": "^1.0.0",
     "sequelize": "^5.7.1",
-    "validator": "^10.11.0",
-    "serverless-http": "^2.6.0"
+    "serverless-http": "^2.6.0",
+    "validator": "^10.11.0"
   },
   "devDependencies": {
     "@babel/cli": "^7.12.1",
     "@babel/core": "^7.12.3",
     "@babel/node": "^7.12.1",
+    "@babel/plugin-transform-runtime": "^7.12.1",
     "@babel/preset-env": "^7.12.1",
     "@babel/register": "^7.12.1",
     "babel-loader": "^8.1.0",

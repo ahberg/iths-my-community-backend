@@ -1,8 +1,10 @@
 'use strict';
 
 import fs  from 'fs';
-import path  from 'path';
+import path, { dirname }  from 'path';
 import Sequelize  from 'sequelize';
+import mysql2 from 'mysql2'; // Needed to fix sequelize issues with WebPack
+
 
 const basename = path.basename(__filename);
 
@@ -12,6 +14,7 @@ const config = {
   database: process.env.DB_NAME,
   host: process.env.DB_HOST,
   dialect: process.env.DB_DIALECT,
+  dialectModule: mysql2, // Needed to fix sequelize issues with WebPack
   pool: {
     max: 5,
     min: 0,
@@ -20,7 +23,7 @@ const config = {
   },
 };
 
-const db = {};
+//const db = {};
 
 let sequelize;
 if (config.use_env_variable) {
@@ -29,15 +32,17 @@ if (config.use_env_variable) {
   sequelize = new Sequelize(config.database, config.username, config.password, config);
 }
 
-fs
-  .readdirSync(__dirname)
-  .filter(file => {
-    return (file.indexOf('.') !== 0) && (file !== basename) && (file.slice(-3) === '.js');
-  })
-  .forEach(file => {
-    const model = sequelize['import'](path.join(__dirname, file));
-    db[model.name] = model;
-  });
+
+  import user from './user'
+  import post from './post'
+  import follower from './follower';
+
+
+  const db = {
+    User: user(sequelize,Sequelize),
+    Post: post(sequelize,Sequelize),
+    Follower: follower(sequelize,Sequelize),
+  }
 
 Object.keys(db).forEach(modelName => {
   if (db[modelName].associate) {

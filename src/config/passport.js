@@ -1,3 +1,4 @@
+import passport from 'passport';
 import { Strategy as JwtStrategy, ExtractJwt } from 'passport-jwt'
 import models from '../models'
 
@@ -8,9 +9,7 @@ opts.jwtFromRequest = ExtractJwt.fromAuthHeaderAsBearerToken();
 opts.secretOrKey = process.env.SECRET;
 // opts.issuer = 'accounts.examplesoft.com';
 // opts.audience = 'yoursite.net';
-
-// create jwt strategy
-module.exports = passport => {
+const  genPass  = passport => {
   passport.use(
     new JwtStrategy(opts, (jwt_payload, done) => {
       if(jwt_payload.id == undefined) {
@@ -26,4 +25,6 @@ module.exports = passport => {
         .catch(err => console.log(err));
     })
   );
-};
+}
+// create jwt strategy
+export default genPass

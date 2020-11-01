@@ -1,7 +1,7 @@
 import  passport from 'passport'
 import {follow, unFollow}  from '../controllers/follow'
 
-module.exports = (app) => {
+export default (app) => {
     app.post(
     '/api/follow/:targetUserId',
     passport.authenticate('jwt',{session:false}),

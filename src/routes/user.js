@@ -11,7 +11,7 @@ import {
   currentUserInfo
 } from "../controllers/user";
 
-module.exports = (app) => {
+export default (app) => {
   // create a new user
   app.post(
     "/api/user",

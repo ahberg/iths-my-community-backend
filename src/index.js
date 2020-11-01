@@ -5,6 +5,7 @@ import bodyParser from 'body-parser';
 import cors from 'cors';
 import models from './models'
 import serverlessHttp from 'serverless-http'
+import genPass from './config/passport'
 
 const app = express();
 
@@ -31,13 +32,17 @@ models.sequelize.sync().then(() => {
 app.use(passport.initialize());
 
 // passport config
-require('./config/passport')(passport);
+genPass(passport)
 
 //default route
 app.get('/', (req, res) => res.send('Hello my World'));
-require('./routes/user.js')(app);
-require('./routes/post.js')(app);
-require('./routes/follow.js')(app);
+//require('./routes/user.js')(app);
+import userRoutes from './routes/user';
+userRoutes(app)
+import postRoutes from './routes/post'
+postRoutes(app)
+import followRoute from './routes/follow'
+followRoute(app)
 //create a server
 
 if(process.env.NODE_ENV === 'development') {
