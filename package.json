@@ -5,8 +5,9 @@
   "scripts": {
     "clean": "rm -rf build && mkdir build",
     "dev": "nodemon --exec babel-node src/index.js",
-    "build-server": "webpack",
-    "build": "npm run clean && npm run build-server",
+    "webpack-build": "webpack",
+    "build": "npm run clean && npm run babel-build",
+    "babel-build": "babel -d ./build ./src -s",
     "start": "node ./build/index.js",
     "debug": "node --debug ./build/index.js"
   },

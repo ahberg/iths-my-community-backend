@@ -15,11 +15,15 @@ const config = {
   host: process.env.DB_HOST,
   dialect: process.env.DB_DIALECT,
   dialectModule: mysql2, // Needed to fix sequelize issues with WebPack
+  dialectOptions: {
+    connectTimeout: 60000
+  },
   pool: {
-    max: 5,
+    max: 2,
     min: 0,
-    acquire: 30000,
-    idle: 10000,
+    acquire: 120000, // This needs to be fairly high to account for a serverless db spinup
+    idle: 120000,
+    evict: 120000
   },
 };
 
