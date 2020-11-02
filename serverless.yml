@@ -11,9 +11,10 @@ provider:
     cors: true
   
 plugins:
-   - serverless-vpc-discovery
-   - serverless-dotenv-plugin
-    
+  - serverless-dotenv-plugin
+  - serverless-vpc-discovery
+
+
 custom:
   dotenv:
     path: '.env.prod.lambda'
