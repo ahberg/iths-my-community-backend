@@ -1,7 +1,5 @@
 #  My community backend
 
-## This is a basic boilerplate for backend development with node and express
-
 ### It comes setup with the following features
 
 - Authentication (passport & JWT)
