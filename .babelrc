@@ -1,21 +1,23 @@
 {
-    "presets": [
-        [
-            "@babel/preset-env",
-            {
-                "debug": true,
-                "useBuiltIns": "entry",
-                "corejs": 3,
-                "targets": {
-                    "node": "current"
-                  }            }
-        ]
-    ],
-    "plugins": [
-        ["@babel/plugin-transform-runtime",
-          {
-            "regenerator": true
-          }
-        ]
-      ],
+  "presets": [
+    [
+      "@babel/preset-env",
+      {
+        "debug": true,
+        "useBuiltIns": "entry",
+        "corejs": 3,
+        "targets": {
+          "node": "current"
+        }
+      }
+    ], "@babel/preset-typescript"
+  ],
+  "plugins": [
+    [
+      "@babel/plugin-transform-runtime",
+      {
+        "regenerator": true
+      }
+    ]
+  ],
 }
