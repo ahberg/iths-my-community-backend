@@ -1,38 +1,49 @@
 # serverless.yml
 
-service: my-community
+service: my-community-serverless
 
 provider:
   name: aws
   runtime: nodejs12.x
   region: eu-north-1
+  memorySize: 512
   timeout: 30
-  stage: prod
   httpApi:
     cors: true
-  
+
 plugins:
   - serverless-dotenv-plugin
   - serverless-vpc-discovery
-
+  - serverless-offline
 
 custom:
+  serverless-offline:
+    httpPort: 3009
+    lambdaPort: 3004
   dotenv:
-    path: '.env.prod.lambda'
+    path: ".env.docker"
     required:
       file: true
   vpc:
-    vpcName: 'my-lambda-vpc'
+    vpcName: "my-lambda-vpc"
     subnetNames:
-      - '1'
-      - '2'
-      - '3'
+      - "1"
+      - "2"
+      - "3"
     securityGroupNames:
-      - 'my-lambda'
+      - "my-lambda"
 
 functions:
-  app:
-    handler: build/index.handler
+  getAll:
+    handler: build/controllers/user.create
     events:
-      - http: ANY /
-      - http: 'ANY {proxy+}'
+      - http:
+          path: 'api/user'
+          method: POST
+
+  testPost:
+    handler: build/handler.testTypeScript
+    events:
+      - http:
+          path: 'api/test'
+          method: post
