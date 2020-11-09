@@ -10,6 +10,7 @@ import validateLoginForm from '../validation/login';
 
 import { APIGatewayProxyHandler as APIHandler } from 'aws-lambda'
 import { MessageUtil } from '../services/message'
+
 const { User } = db;
 
 const defaultValues = {
@@ -26,7 +27,7 @@ const getPasswordHash = (password) => {
 };
 
 const generateAuthToken = async (payload) => {
-  const token = await jwt.sign(
+  const token =  jwt.sign(
     payload,
     process.env.SECRET,
     {
@@ -115,7 +116,7 @@ const findAllUsers: APIHandler = async (event, context) => {
   const { Op } = require('sequelize');
   const search = {
     where: {
-      id: { [Op.ne]: req.user.id },
+      id: { [Op.ne]: event.user.id },
     },
     raw: true,
   };
@@ -124,7 +125,7 @@ const findAllUsers: APIHandler = async (event, context) => {
   users.forEach((u) => {
     Object.assign(u, defaultValues);
   });
-  res.json({ success: true, users });
+  MessageUtil.success({ success: true, users });
 };
 
 const currentUserInfo = async (event, context) => {
@@ -157,11 +158,11 @@ const currentUserInfo = async (event, context) => {
 
 // fetch user by userId
 const userInfoByUsername: APIHandler = async (event, context) => {
-  const { username } = req.params;
+  const { username } = event.pathParameters;
 
   const user = await User.findOne({ where: { username }, raw: true });
   if (user == null) {
-    return res.json({ success: false, msg: `user ${username} not found` });
+    return MessageUtil.success({ success: false, msg: `user ${username} not found` });
   }
   const posts = await getUserPosts(user.id);
   const query = { where: { ownerId: user.id }, attributes: ['targetId'] };
@@ -169,15 +170,15 @@ const userInfoByUsername: APIHandler = async (event, context) => {
   user.following = following.map((f) => f.targetId);
   Object.assign(user, defaultValues);
   user.posts = posts;
-  res.json({ success: true, user });
+  return MessageUtil.success({ success: true, user });
 };
 
 // update a user's info
 const update: APIHandler = async (event, context) => {
   type Input = { [key: string]: { prop: any } };
-  const postInput: any = JSON.parse(event.body || '')
+  const postInput: any = event.body
   const fields: Input = {};
-  const id = req.params.userId;
+  const id = event.pathParameters.userId;
 
   if (typeof postInput.name !== 'undefined') {
     fields.name = postInput.name;
@@ -189,36 +190,26 @@ const update: APIHandler = async (event, context) => {
     fields.password = getPasswordHash(postInput.password);
   }
 
-  User.update(fields, { where: { id } })
-    .then((user) => res.status(200).json({ message: 'User updated' }))
+  return User.update(fields, { where: { id } })
+    .then((user) => MessageUtil.success({ message: 'User updated' }))
     .catch((err) => {
       return MessageUtil.error(500, err)
     });
 };
 // delete a user
 const deleteUser: APIHandler = (event, context) => {
-  const id = req.params.userId;
+  const id = event.pathParameters.userId;
+
 
   return User.destroy({ where: { id } })
-    .then(() => res.status.json({ msg: 'User has been deleted successfully!' }))
+    .then(() => MessageUtil.success({ msg: 'User has been deleted successfully!' }))
     .catch((err) => { return MessageUtil.error(500, { msg: 'Failed to delete!' }) });
 };
 
-export const routeCreate: (
-  event: APIGatewayEvent,
-  context: Context
-) => Promise<APIGatewayProxyResult> = inputParser(create)
-
-
-export const routeLogin: (
-  event: APIGatewayEvent,
-  context: Context
-) => Promise<APIGatewayProxyResult> = inputParser(login)
-
-export const routeUserInfo: (
-  event: APIGatewayEvent,
-  context: Context
-) => Promise<APIGatewayProxyResult> = authenticateToken(currentUserInfo)
-
-
+export const routeCreate = inputParser(create)
+export const routeLogin = inputParser(login)
+export const routeUserInfo = authenticateToken(currentUserInfo)
+export const routeFindALl = authenticateToken(findAllUsers)
+export const routeUserUpdate = authenticateToken(inputParser(update))
+export const routeUserDelete = authenticateToken(deleteUser)
 

@@ -12,7 +12,6 @@ provider:
     cors: true
 
 plugins:
-  - serverless-middleware
   - serverless-dotenv-plugin
   - serverless-vpc-discovery
   - serverless-offline
@@ -56,9 +55,27 @@ functions:
           path: 'api/user/login'
           method: POST
   userInfo:
-    handler: 
-      - build/controllers/user.routeUserInfo
+    handler: build/controllers/user.routeUserInfo
     events:
       - http:
           path: 'api/user/info'
           method: GET
+  userFindAll:
+    handler: build/controllers/user.routeFindUsers
+    events:
+      - http:
+          path: 'api/users'
+          method: GET
+   
+  userUpdate:
+    handler: build/controllers/user.routeUserUpdate
+    events:
+      - http:
+          path: 'api/users/{userId}'
+          method: 'PUT'
+  userDelete:
+    handler: build/controllers/user.routeUserUpdate
+    events:
+      - http:
+          path: 'api/users/{userId}'
+          method: 'DELETE'

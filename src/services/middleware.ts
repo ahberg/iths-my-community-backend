@@ -23,7 +23,7 @@ const Users = models.User;
     
 }
 
-function extractTokenFromHeader(headerAuth) {
+function extractTokenFromHeader(headerAuth:string) {
     if (headerAuth && headerAuth.split(' ')[0] === 'Bearer') {
         return headerAuth.split(' ')[1];
     } else {
@@ -45,14 +45,14 @@ const unauthorized = async (): Promise<APIGatewayProxyResult> => {
     }
 }
 
-function inputParser(handler: (event) => Promise): (event: APIGatewayEvent) => Promise {
+function inputParser(handlerFunction:any) {
     return (event: APIGatewayEvent) => {
-        const input = JSON.parse(event.body ?? {});
+        const input = JSON.parse(event.body ?? '{}');
         if (Object.keys(input).length === 0) {
             return failed();
         }
         event.body = input
-        return handler(event)
+        return handlerFunction(event)
     };
 }
 // create jwt strategy
