@@ -32,7 +32,7 @@ class Result {
 export class MessageUtil {
   static success(body: object) {
       const result = new Result(StatusCode.success, body);
-      console.log(result.bodyToString())
+      //console.log(result.bodyToString())
     return result.bodyToString();
   }
 

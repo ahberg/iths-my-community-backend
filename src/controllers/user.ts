@@ -2,14 +2,14 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import db from '../models';
 import { getUserPosts } from './post';
-
+import { inputParser } from '../services/middleware'
 
 // load input validation
 import validateRegisterForm from '../validation/register';
 import validateLoginForm from '../validation/login';
 
-import {APIGatewayProxyHandler as APIHandler}  from 'aws-lambda' 
-import{MessageUtil } from '../services/message'
+import { APIGatewayProxyHandler as APIHandler } from 'aws-lambda'
+import { MessageUtil } from '../services/message'
 const { User } = db;
 
 const defaultValues = {
@@ -37,22 +37,22 @@ const generateAuthToken = async (payload) => {
 };
 
 // create user
-const create: APIHandler = async(event, context) => {
-  const { errors, isValid } = validateRegisterForm(JSON.parse(event.body));
+const create: APIHandler = async (event, context) => {
+  const { errors, isValid } = validateRegisterForm(event.body);
   const {
     username, name, password, bio,
-  } = JSON.parse(event.body);
-  
-  
+  } = event.body
+
+
   // check validation
   if (!isValid) {
     const message = Object.values(errors)[0];
     return MessageUtil.success({ success: false, message })
   }
-  
+
   return User.findAll({ where: { username } }).then((user) => {
     if (user.length) {
-      return MessageUtil.error(400,{ success: false, message: 'Username already exists!' })
+      return MessageUtil.error(400, { success: false, message: 'Username already exists!' })
     }
     const newUser = {
       username,
@@ -60,59 +60,58 @@ const create: APIHandler = async(event, context) => {
       password,
       bio,
     };
-       newUser.password = getPasswordHash(newUser.password)
-       return User.create(newUser).then((user) => {
-          return MessageUtil.success({ success: true, user });
-        })
-        .catch((err) => {
-          return MessageUtil.error(500,{ success: false, message: err });
-        });
-      
+    newUser.password = getPasswordHash(newUser.password)
+    return User.create(newUser).then((user) => {
+      return MessageUtil.success({ success: true, user });
+    })
+      .catch((err) => {
+        return MessageUtil.error(500, { success: false, message: err });
       });
+
+  });
 };
 
-const login = async (req, res) => {
-  const { errors, isValid } = validateLoginForm(req.body);
+const login: APIHandler = async (event, context) => {
+  const postInput: any = event.body
+  const { errors, isValid } = validateLoginForm(postInput);
 
   // check validation
   if (!isValid) {
-    return res.status(400).json(errors);
+    return MessageUtil.error(400, errors);
   }
+  const { username, password } = postInput;
+  console.log(password)
 
-  const { username, password } = req.body;
-
-  User.findOne({
+  const user = await User.findOne({
     where: {
       username,
     },
-  })
-    .then(async (user) => {
-      // check for user
-      if (!user) {
-        errors.message = 'User not found!';
-        return res.status(404).json(errors);
-      }
+  });
 
-      const originalPassword = user.dataValues.password;
-      // check for password
-      bcrypt
-        .compare(password, originalPassword)
-        .then(async (isMatch) => {
-          if (isMatch) {
-            // user matched
-            req.user = user;
-            return await currentUserInfo(req, res);
-          }
-          errors.message = 'Password not correct';
-          return res.status(400).json(errors);
-        })
-        .catch((err) => console.log(err));
+
+  // check for user
+  if (!user) {
+    errors.message = 'User not found!';
+    return MessageUtil.error(404, errors);
+  }
+
+  const originalPassword = user.dataValues.password;
+  // check for password
+  return bcrypt
+    .compare(password, originalPassword)
+    .then(async (isMatch) => {
+      if (isMatch) {
+        // user matched
+        event.user = user;
+        return await currentUserInfo(event, context);
+      }
+      errors.message = 'Password not correct';
+      return MessageUtil.error(400, errors);
     })
-    .catch((err) => res.status(500).json({ err }));
-};
+}
 
 // fetch all users
-const findAllUsers = async (req, res) => {
+const findAllUsers: APIHandler = async (event, context) => {
   const { Op } = require('sequelize');
   const search = {
     where: {
@@ -128,8 +127,8 @@ const findAllUsers = async (req, res) => {
   res.json({ success: true, users });
 };
 
-const currentUserInfo = async (req, res) => {
-  const user = req.user.dataValues;
+const currentUserInfo = async (event, context) => {
+  const user = event.user.dataValues;
   const { id, username } = user;
   const payload = { id, username }; // jwt payload
   const query = {
@@ -153,15 +152,11 @@ const currentUserInfo = async (req, res) => {
   Object.assign(user, defaultValues);
 
   const token = await generateAuthToken(payload);
-  res.json({
-    success: true,
-    token,
-    user,
-  });
+  return MessageUtil.success({ success: true, user });
 };
 
 // fetch user by userId
-const userInfoByUsername = async (req, res) => {
+const userInfoByUsername: APIHandler = async (event, context) => {
   const { username } = req.params;
 
   const user = await User.findOne({ where: { username }, raw: true });
@@ -178,47 +173,46 @@ const userInfoByUsername = async (req, res) => {
 };
 
 // update a user's info
-const update = (req, res) => {
-  const fields = {};
+const update: APIHandler = async (event, context) => {
+  type Input = { [key: string]: { prop: any } };
+  const postInput: any = JSON.parse(event.body || '')
+  const fields: Input = {};
   const id = req.params.userId;
 
-  if (typeof req.body.name !== 'undefined') {
-    fields.name = req.body.name;
+  if (typeof postInput.name !== 'undefined') {
+    fields.name = postInput.name;
   }
-  if (typeof req.body.bio !== 'undefined') {
-    fields.bio = req.body.bio;
+  if (typeof postInput.bio !== 'undefined') {
+    fields.bio = postInput.bio;
   }
-  if (typeof req.body.password !== 'undefined') {
-    fields.password = getPasswordHash(req.body.password);
+  if (typeof postInput.password !== 'undefined') {
+    fields.password = getPasswordHash(postInput.password);
   }
 
   User.update(fields, { where: { id } })
     .then((user) => res.status(200).json({ message: 'User updated' }))
-    .catch((err) => res.status(500).json({ err }));
+    .catch((err) => {
+      return MessageUtil.error(500, err)
+    });
 };
-
 // delete a user
-const deleteUser = (req, res) => {
+const deleteUser: APIHandler = (event, context) => {
   const id = req.params.userId;
 
-  User.destroy({ where: { id } })
+  return User.destroy({ where: { id } })
     .then(() => res.status.json({ msg: 'User has been deleted successfully!' }))
-    .catch((err) => res.status(500).json({ msg: 'Failed to delete!' }));
+    .catch((err) => { return MessageUtil.error(500, { msg: 'Failed to delete!' }) });
 };
 
-const userPosts = (req, res) => {
-  const posts = [];
+export const routeCreate: (
+  event: APIGatewayEvent,
+  context: Context
+) => Promise<APIGatewayProxyResult> = inputParser(create)
 
-  res.json({ posts });
-};
 
-export {
-  create,
-  login,
-  findAllUsers,
-  userInfoByUsername,
-  update,
-  deleteUser,
-  userPosts,
-  currentUserInfo,
-};
+export const routeLogin: (
+  event: APIGatewayEvent,
+  context: Context
+) => Promise<APIGatewayProxyResult> = inputParser(login)
+
+

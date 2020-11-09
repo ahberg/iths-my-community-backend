@@ -12,9 +12,11 @@ provider:
     cors: true
 
 plugins:
+  - serverless-middleware
   - serverless-dotenv-plugin
   - serverless-vpc-discovery
   - serverless-offline
+
 
 custom:
   serverless-offline:
@@ -32,18 +34,31 @@ custom:
       - "3"
     securityGroupNames:
       - "my-lambda"
+  custom:
+    middleware:
+      folderName: '.middleware' # defaults to '.middleware'
+      cleanFolder: true        # defaults to 'true'
 
 functions:
-  getAll:
-    handler: build/controllers/user.create
+  userCreate:
+    handler: 
+      - 'build/controllers/user.routeCreate'
     events:
       - http:
           path: 'api/user'
           method: POST
 
+  userLogin:
+    handler: 
+      - 'build/controllers/user.routeLogin'
+    events:
+      - http:
+          path: 'api/user/login'
+          method: POST
   testPost:
-    handler: build/handler.testTypeScript
+    handler: 
+      - build/handler.add
     events:
       - http:
           path: 'api/test'
-          method: post
+          method: POST

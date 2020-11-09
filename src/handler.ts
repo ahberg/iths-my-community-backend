@@ -1,55 +1,102 @@
-import {create} from './controllers/user'
-import { APIGatewayProxyHandler } from 'aws-lambda' 
 
- class Response1 {
-  constructor() {
-    this.body = '';
-  }
-
-  json(j) {
-    this.body = j;
-    this.json = JSON.stringify(j);
-  }
-  
-  status(code) {
-    this.code = code;
-  }
-  
-  getResonse() {
-    return JSON.stringify(this.body);
-  }
-}
-const Response = require('mock-express-response');
-const Request = require('mock-express-request');
-
-const createUser: APIGatewayProxyHandler = async (event, context, callback) => {
-  
-  context.callbackWaitsForEmptyEventLoop = false;
-  const req = new Request({
-    method: 'POST',
-    url: '',
-    body: JSON.parse(event.body || ''),
-    headers: {
-      Accept: 'application/json',
-    },
-  });
-  
-  const res = new Response();
-  await create(req, res);
-  console.log(res._getString())
-  callback(null, {
-    statusCode: 200,
-    body: res._getString
-  });
-}; 
+import {create,} from './controllers/user'
 
 
-const testTypeScript: APIGatewayProxyHandler = async (event) => {
-  return {
-    statusCode: 200,
-    body: 'Hej',
-  };
+import { APIGatewayProxyHandler,APIGatewayProxyResult, APIGatewayEvent, Context } from "aws-lambda";
+
+type Input = {
+  a: number;
+  b: number;
 };
 
+const sum = async(input:Input ): Promise <APIGatewayProxyResult> => {
+  console.log(input)
+  const result = input.a + input.b 
+  return {
+      statusCode: 200,
+      body: JSON.stringify(result),
+  };
+}
 
-export {testTypeScript,createUser}
+const failed = async(input:Input ): Promise<APIGatewayProxyResult> => {
+  return {
+      statusCode: 404,
+      body: 'fel'
+}
+}
+
+function inputParser(handler: ({ a, b }: Input) => Promise): (event: APIGatewayEvent) => Promise{
+    return (event: APIGatewayEvent) => {
+      const input  = JSON.parse(event.body ?? "{}");
+      let check = input.a ?? false
+      if(check === false) {
+          return failed(input);
+      } else {
+        return  handler(input)
+      }
+    };
+}
+
+const  jsonSerializer = <Event>(handler: (event: Event) => Promise<object>): (event: Event) => Promise<APIGatewayProxyResult> => {
+  return async (event: Event) => {
+    console.log(handler)
+    return {
+      statusCode: 200,
+      body: JSON.stringify(await handler(event)),
+    };
+  };
+}
+
+function jsonSerializer1<Event>(
+  handler: (event: Event) => Promise<object>
+): (event: Event) => Promise<APIGatewayProxyResult> {
+  return async (event: Event) => {
+    return {
+      statusCode: 200,
+      body: JSON.stringify(await handler(event)),
+    };
+  };
+}
+
+
+const https = require('https')
+let url = "https://docs.aws.amazon.com/lambda/latest/dg/asdasd"
+
+const myGeturl =  function(event) {
+  const pr = new Promise(function(resolve, reject) {
+    https.get(url, (res) => {
+      console.log(res.headers)
+        resolve(res.statusCode)
+      }).on('error', (e) => {
+        reject(e.statusCode)
+      })
+    })
+  return pr
+}
+
+export const add: (
+  event: APIGatewayEvent,
+  context: Context
+) => Promise<APIGatewayProxyResult> = inputParser(sum)
+
+
+
+export const test = MyHandler(inputParser(sum))
+
+function MyHandler<Event>(
+  handler: (event: Event) => Promise<object>
+): (event: Event) => Promise<APIGatewayProxyResult> {
+  return async (event: Event) => {
+   return myGeturl(event).then((status) => {
+      return {
+        statusCode: 200,
+        body: JSON.stringify(status),
+      }
+    }).catch((status) => {
+      return {
+        statusCode: 200,
+        body: JSON.stringify(status),
+      }
+    })
+  }
+}
