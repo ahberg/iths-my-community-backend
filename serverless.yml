@@ -55,10 +55,10 @@ functions:
       - http:
           path: 'api/user/login'
           method: POST
-  testPost:
+  userInfo:
     handler: 
-      - build/handler.add
+      - build/controllers/user.routeUserInfo
     events:
       - http:
-          path: 'api/test'
-          method: POST
+          path: 'api/user/info'
+          method: GET

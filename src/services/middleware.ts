@@ -1,61 +1,59 @@
-import { Strategy as JwtStrategy, ExtractJwt } from 'passport-jwt'
 import models from '../models'
-import { APIGatewayProxyHandler as APIHandler } from 'aws-lambda'
-import passport from 'passport';
+import jwt from 'jsonwebtoken';
+import { APIGatewayProxyHandler,APIGatewayProxyResult, APIGatewayEvent, Context } from "aws-lambda";
+
 
 const Users = models.User;
 
 
-const  checkPass  = (passport) => {
-    const opts:{[key: string]: { prop:  any}} = {};
 
-    opts.jwtFromRequest = ExtractJwt.fromAuthHeaderAsBearerToken();
-    opts.secretOrKey = process.env.SECRET;
-    passport.use(
-      new JwtStrategy(opts, (jwt_payload, done) => {
-        if(jwt_payload.id == undefined) {
-          return done(null, false);
-        }
-        Users.findAll({ where: { id: jwt_payload.id } })
-          .then(user => {
-            if (user.length) {
-              return done(null, user[0]);
-            }
-            return done(null, false);
-          })
-          .catch(err => console.log(err));
-      })
-    );
-  }
 // opts.issuer = 'accounts.examplesoft.com';
 // opts.audience = 'yoursite.net';
-const  authenticate:APIHandler  = async(event,context) => {
-  const result  = checkPass(passport)
-  console.log(result)
-
-    return {
-      statusCode: 200,
-      body: 'No results',
-    };
+ const authenticateToken = (handlerFunction:any)  =>{
+    return async(event: APIGatewayEvent) => {
+        try {
+            const payload =   jwt.verify(extractTokenFromHeader(event.headers.Authorization), process.env.SECRET);
+            event.user   =   await Users.findOne({ where: { id: payload.id } }) 
+            return  handlerFunction(event)
+        } catch (e) {
+            console.error(e);
+            return unauthorized()
+        }
+    }
+    
 }
 
-const failed = async(): Promise<APIGatewayProxyResult> => {
+function extractTokenFromHeader(headerAuth) {
+    if (headerAuth && headerAuth.split(' ')[0] === 'Bearer') {
+        return headerAuth.split(' ')[1];
+    } else {
+        return headerAuth;
+    }
+}
+
+const failed = async (): Promise<APIGatewayProxyResult> => {
     return {
         statusCode: 500,
         body: 'input JSON not valid'
-  }
-  }
+    }
+}
 
-function inputParser(handler: (event ) => Promise): (event: APIGatewayEvent) => Promise{
+const unauthorized = async (): Promise<APIGatewayProxyResult> => {
+    return {
+        statusCode: 401,
+        body: 'Unauthorized'
+    }
+}
+
+function inputParser(handler: (event) => Promise): (event: APIGatewayEvent) => Promise {
     return (event: APIGatewayEvent) => {
-      const input  = JSON.parse(event.body ?? {});
-      console.log(Object.keys(input).length) 
-      if(Object.keys(input).length === 0) {
-          return failed();
-      } 
-      event.body = input
-      return  handler(event)
+        const input = JSON.parse(event.body ?? {});
+        if (Object.keys(input).length === 0) {
+            return failed();
+        }
+        event.body = input
+        return handler(event)
     };
 }
 // create jwt strategy
-export  {authenticate,inputParser}
+export { authenticateToken, inputParser }

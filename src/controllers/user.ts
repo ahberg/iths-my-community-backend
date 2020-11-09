@@ -2,7 +2,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import db from '../models';
 import { getUserPosts } from './post';
-import { inputParser } from '../services/middleware'
+import { inputParser,authenticateToken } from '../services/middleware'
 
 // load input validation
 import validateRegisterForm from '../validation/register';
@@ -152,7 +152,7 @@ const currentUserInfo = async (event, context) => {
   Object.assign(user, defaultValues);
 
   const token = await generateAuthToken(payload);
-  return MessageUtil.success({ success: true, user });
+  return MessageUtil.success({ success: true, user, token });
 };
 
 // fetch user by userId
@@ -214,5 +214,11 @@ export const routeLogin: (
   event: APIGatewayEvent,
   context: Context
 ) => Promise<APIGatewayProxyResult> = inputParser(login)
+
+export const routeUserInfo: (
+  event: APIGatewayEvent,
+  context: Context
+) => Promise<APIGatewayProxyResult> = authenticateToken(currentUserInfo)
+
 
 
