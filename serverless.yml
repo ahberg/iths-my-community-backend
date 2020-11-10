@@ -40,16 +40,14 @@ custom:
 
 functions:
   userCreate:
-    handler: 
-      - 'build/controllers/user.routeCreate'
+    handler: build/controllers/user.routeCreate
     events:
       - http:
           path: 'api/user'
           method: POST
 
   userLogin:
-    handler: 
-      - 'build/controllers/user.routeLogin'
+    handler: build/controllers/user.routeLogin
     events:
       - http:
           path: 'api/user/login'
@@ -60,13 +58,6 @@ functions:
       - http:
           path: 'api/user/info'
           method: GET
-  userFindAll:
-    handler: build/controllers/user.routeFindUsers
-    events:
-      - http:
-          path: 'api/users'
-          method: GET
-   
   userUpdate:
     handler: build/controllers/user.routeUserUpdate
     events:
@@ -79,3 +70,47 @@ functions:
       - http:
           path: 'api/users/{userId}'
           method: 'DELETE'
+  userFindAll:
+    handler: build/controllers/user.routeFindAll
+    events:
+      - http:
+          path: 'api/users'
+          method: GET
+  userFind:
+    handler: build/controllers/user.routeFind
+    events:
+      - http:
+          path: 'api/users/{username}'
+          method: GET
+  
+  postCreate:
+    handler: build/controllers/post.routeCreate
+    events:
+       - http:
+           path: api/post
+           method: POST
+  postDelete:
+    handler: build/controllers/post.routeDelete
+    events:
+       - http:
+           path: api/post/{postId}
+           method: DELETE
+  postUser:
+    handler: build/controllers/post.routeUserPosts
+    events:
+      - http:
+          path: api/user/posts
+          method: GET
+  
+  followCreate:
+    handler: build/controllers/follow.routeFollow
+    events:
+      - http:
+         path: api/follow/{targetUserId}
+         method: POST
+  followDelete:
+    handler: build/controllers/follow.routeUnFollow
+    events:
+      - http:
+          path: api/follow/{targetUserId}
+          method: DELETE

@@ -9,14 +9,13 @@ const Users = models.User;
 
 // opts.issuer = 'accounts.examplesoft.com';
 // opts.audience = 'yoursite.net';
- const authenticateToken = (handlerFunction:any)  =>{
+ const authenticateUser = (handlerFunction:any)  =>{
     return async(event: APIGatewayEvent) => {
         try {
             const payload =   jwt.verify(extractTokenFromHeader(event.headers.Authorization), process.env.SECRET);
             event.user   =   await Users.findOne({ where: { id: payload.id } }) 
             return  handlerFunction(event)
         } catch (e) {
-            console.error(e);
             return unauthorized()
         }
     }
@@ -56,4 +55,4 @@ function inputParser(handlerFunction:any) {
     };
 }
 // create jwt strategy
-export { authenticateToken, inputParser }
+export { authenticateUser, inputParser }

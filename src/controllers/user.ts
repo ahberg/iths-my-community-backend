@@ -2,7 +2,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import db from '../models';
 import { getUserPosts } from './post';
-import { inputParser,authenticateToken } from '../services/middleware'
+import { inputParser,authenticateUser } from '../services/middleware'
 
 // load input validation
 import validateRegisterForm from '../validation/register';
@@ -125,7 +125,7 @@ const findAllUsers: APIHandler = async (event, context) => {
   users.forEach((u) => {
     Object.assign(u, defaultValues);
   });
-  MessageUtil.success({ success: true, users });
+  return MessageUtil.success({ success: true, users });
 };
 
 const currentUserInfo = async (event, context) => {
@@ -208,8 +208,9 @@ const deleteUser: APIHandler = (event, context) => {
 
 export const routeCreate = inputParser(create)
 export const routeLogin = inputParser(login)
-export const routeUserInfo = authenticateToken(currentUserInfo)
-export const routeFindALl = authenticateToken(findAllUsers)
-export const routeUserUpdate = authenticateToken(inputParser(update))
-export const routeUserDelete = authenticateToken(deleteUser)
+export const routeUserInfo = authenticateUser(currentUserInfo)
+export const routeFindAll = authenticateUser(findAllUsers)
+export const routeFind = authenticateUser(userInfoByUsername)
+export const routeUserUpdate = authenticateUser(inputParser(update))
+export const routeUserDelete = authenticateUser(deleteUser)
 
