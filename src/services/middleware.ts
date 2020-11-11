@@ -1,6 +1,7 @@
 import models from '../models'
 import jwt from 'jsonwebtoken';
 import { APIGatewayProxyHandler,APIGatewayProxyResult, APIGatewayEvent, Context } from "aws-lambda";
+import { MessageUtil } from './message';
 
 
 const Users = models.User;
@@ -15,11 +16,14 @@ const Users = models.User;
             const payload =   jwt.verify(extractTokenFromHeader(event.headers.Authorization), process.env.SECRET);
             event.user   =   await Users.findOne({ where: { id: payload.id } }) 
             return  handlerFunction(event)
-        } catch (e) {
-            return unauthorized()
+        } catch (error) {
+            if (error.name === 'JsonWebTokenError') {
+                return unauthorized()
+            } 
+            console.error(error)
+            return MessageUtil.error(500,{message:'Server error'});
         }
     }
-    
 }
 
 function extractTokenFromHeader(headerAuth:string) {
@@ -31,17 +35,14 @@ function extractTokenFromHeader(headerAuth:string) {
 }
 
 const failed = async (): Promise<APIGatewayProxyResult> => {
-    return {
-        statusCode: 500,
-        body: 'input JSON not valid'
-    }
+   return MessageUtil.error(500, {
+        message: 'input JSON not valid'
+    })
 }
 
+
 const unauthorized = async (): Promise<APIGatewayProxyResult> => {
-    return {
-        statusCode: 401,
-        body: 'Unauthorized'
-    }
+    return MessageUtil.error(401,{message: 'unauthorized'})
 }
 
 function inputParser(handlerFunction:any) {

@@ -6,11 +6,17 @@ provider:
   name: aws
   runtime: nodejs12.x
   region: eu-north-1
+  stage: prod
   memorySize: 512
   timeout: 30
-  httpApi:
-    cors: true
 
+package:
+  exclude:
+    - '**'
+    - '!node_modules/**'
+  include:
+    - build/**
+  
 plugins:
   - serverless-dotenv-plugin
   - serverless-vpc-discovery
@@ -22,7 +28,6 @@ custom:
     httpPort: 3009
     lambdaPort: 3004
   dotenv:
-    path: ".env.docker"
     required:
       file: true
   vpc:
@@ -33,18 +38,28 @@ custom:
       - "3"
     securityGroupNames:
       - "my-lambda"
-  custom:
-    middleware:
-      folderName: '.middleware' # defaults to '.middleware'
-      cleanFolder: true        # defaults to 'true'
+
+resources:
+  Resources:
+    GatewayResponseDefault4XX:
+      Type: 'AWS::ApiGateway::GatewayResponse'
+      Properties:
+        ResponseParameters:
+          gatewayresponse.header.Access-Control-Allow-Origin: "'*'"
+          gatewayresponse.header.Access-Control-Allow-Headers: "'*'"
+        ResponseType: DEFAULT_4XX
+        RestApiId:
+          Ref: 'ApiGatewayRestApi'
 
 functions:
+
   userCreate:
     handler: build/controllers/user.routeCreate
     events:
       - http:
           path: 'api/user'
           method: POST
+          cors: true 
 
   userLogin:
     handler: build/controllers/user.routeLogin
@@ -52,36 +67,35 @@ functions:
       - http:
           path: 'api/user/login'
           method: POST
+          cors: true 
   userInfo:
     handler: build/controllers/user.routeUserInfo
     events:
       - http:
           path: 'api/user/info'
           method: GET
+          cors: true 
   userUpdate:
     handler: build/controllers/user.routeUserUpdate
     events:
       - http:
           path: 'api/users/{userId}'
           method: 'PUT'
-  userDelete:
-    handler: build/controllers/user.routeUserUpdate
-    events:
-      - http:
-          path: 'api/users/{userId}'
-          method: 'DELETE'
+          cors: true 
   userFindAll:
     handler: build/controllers/user.routeFindAll
     events:
       - http:
           path: 'api/users'
           method: GET
+          cors: true
   userFind:
     handler: build/controllers/user.routeFind
     events:
       - http:
-          path: 'api/users/{username}'
+          path: 'api/profile/{username}'
           method: GET
+          cors: true
   
   postCreate:
     handler: build/controllers/post.routeCreate
@@ -89,18 +103,21 @@ functions:
        - http:
            path: api/post
            method: POST
+           cors: true
   postDelete:
     handler: build/controllers/post.routeDelete
     events:
        - http:
            path: api/post/{postId}
            method: DELETE
+           cors: true
   postUser:
     handler: build/controllers/post.routeUserPosts
     events:
       - http:
           path: api/user/posts
           method: GET
+          cors: true
   
   followCreate:
     handler: build/controllers/follow.routeFollow
@@ -108,9 +125,12 @@ functions:
       - http:
          path: api/follow/{targetUserId}
          method: POST
+         cors: true 
+
   followDelete:
     handler: build/controllers/follow.routeUnFollow
     events:
       - http:
           path: api/follow/{targetUserId}
           method: DELETE
+          cors: true 

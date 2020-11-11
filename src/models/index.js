@@ -1,4 +1,3 @@
-'use strict';
 
 import fs  from 'fs';
 import path, { dirname }  from 'path';
