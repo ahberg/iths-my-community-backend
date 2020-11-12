@@ -1,38 +1,134 @@
 # serverless.yml
 
-service: my-community
+service: my-community-serverless
 
 provider:
   name: aws
   runtime: nodejs12.x
   region: eu-north-1
-  timeout: 30
   stage: prod
-  httpApi:
-    cors: true
+  memorySize: 512
+  timeout: 30
+
+package:
+  exclude:
+    - '**'
+    - '!node_modules/**'
+  include:
+    - build/**
   
 plugins:
   - serverless-dotenv-plugin
   - serverless-vpc-discovery
+  - serverless-offline
 
 
 custom:
+  serverless-offline:
+    httpPort: 3009
+    lambdaPort: 3004
   dotenv:
-    path: '.env.prod.lambda'
     required:
       file: true
   vpc:
-    vpcName: 'my-lambda-vpc'
+    vpcName: "my-lambda-vpc"
     subnetNames:
-      - '1'
-      - '2'
-      - '3'
+      - "1"
+      - "2"
+      - "3"
     securityGroupNames:
-      - 'my-lambda'
+      - "my-lambda"
+
+resources:
+  Resources:
+    GatewayResponseDefault4XX:
+      Type: 'AWS::ApiGateway::GatewayResponse'
+      Properties:
+        ResponseParameters:
+          gatewayresponse.header.Access-Control-Allow-Origin: "'*'"
+          gatewayresponse.header.Access-Control-Allow-Headers: "'*'"
+        ResponseType: DEFAULT_4XX
+        RestApiId:
+          Ref: 'ApiGatewayRestApi'
 
 functions:
-  app:
-    handler: build/index.handler
+
+  userCreate:
+    handler: build/controllers/user.routeCreate
     events:
-      - http: ANY /
-      - http: 'ANY {proxy+}'
+      - http:
+          path: 'api/user'
+          method: POST
+          cors: true 
+
+  userLogin:
+    handler: build/controllers/user.routeLogin
+    events:
+      - http:
+          path: 'api/user/login'
+          method: POST
+          cors: true 
+  userInfo:
+    handler: build/controllers/user.routeUserInfo
+    events:
+      - http:
+          path: 'api/user/info'
+          method: GET
+          cors: true 
+  userUpdate:
+    handler: build/controllers/user.routeUserUpdate
+    events:
+      - http:
+          path: 'api/users/{userId}'
+          method: 'PUT'
+          cors: true 
+  userFindAll:
+    handler: build/controllers/user.routeFindAll
+    events:
+      - http:
+          path: 'api/users'
+          method: GET
+          cors: true
+  userFind:
+    handler: build/controllers/user.routeFind
+    events:
+      - http:
+          path: 'api/profile/{username}'
+          method: GET
+          cors: true
+  
+  postCreate:
+    handler: build/controllers/post.routeCreate
+    events:
+       - http:
+           path: api/post
+           method: POST
+           cors: true
+  postDelete:
+    handler: build/controllers/post.routeDelete
+    events:
+       - http:
+           path: api/post/{postId}
+           method: DELETE
+           cors: true
+  postUser:
+    handler: build/controllers/post.routeUserPosts
+    events:
+      - http:
+          path: api/user/posts
+          method: GET
+          cors: true
+  follow:
+    handler: build/controllers/follow.route
+    events:
+      - http:
+         path: api/follow/{targetUserId}
+         method: POST
+         cors: true 
+  unFollow:
+    handler: build/controllers/follow.route
+    events:
+      - http:
+         path: api/follow/{targetUserId}
+         method: DELETE
+         cors: true 
