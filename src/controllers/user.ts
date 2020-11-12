@@ -1,8 +1,7 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import db from '../models';
 import { getUserPosts } from './post';
-import { inputParser,authenticateUser } from '../services/middleware'
+import { inputParser,authenticateUser,addSequelize } from '../services/middleware'
 
 // load input validation
 import validateRegisterForm from '../validation/register';
@@ -11,7 +10,6 @@ import validateLoginForm from '../validation/login';
 import { APIGatewayProxyHandler as APIHandler } from 'aws-lambda'
 import { MessageUtil } from '../services/message'
 
-const { User } = db;
 
 const defaultValues = {
   // following: [],
@@ -51,7 +49,7 @@ const create: APIHandler = async (event, context) => {
     return MessageUtil.success({ success: false, message })
   }
 
-  return User.findAll({ where: { username } }).then((user) => {
+  return event.db.User.findAll({ where: { username } }).then((user) => {
     if (user.length) {
       return MessageUtil.error(400, { success: false, message: 'Username already exists!' })
     }
@@ -61,8 +59,8 @@ const create: APIHandler = async (event, context) => {
       password,
       bio,
     };
-    newUser.password = getPasswordHash(newUser.password)
-    return User.create(newUser).then((user) => {
+    newUser.password = getPasswordHash(newevent.db.User.password)
+    return event.db.User.create(newUser).then((user) => {
       return MessageUtil.success({ success: true, user });
     })
       .catch((err) => {
@@ -81,9 +79,8 @@ const login: APIHandler = async (event, context) => {
     return MessageUtil.error(400, errors);
   }
   const { username, password } = postInput;
-  console.log(password)
 
-  const user = await User.findOne({
+  const user = await event.db.User.findOne({
     where: {
       username,
     },
@@ -120,7 +117,7 @@ const findAllUsers: APIHandler = async (event, context) => {
     },
     raw: true,
   };
-  const results = await User.findAll(search);
+  const results = await event.db.User.findAll(search);
   const users = results;
   users.forEach((u) => {
     Object.assign(u, defaultValues);
@@ -141,15 +138,15 @@ const currentUserInfo = async (event, context) => {
       'target.name',
     ],
     include: [{
-      model: User,
+      model: event.db.User,
       as: 'target',
       attributes: [],
 
     }],
   };
-  const following = await db.Follower.findAll(query);
+  const following = await event.db.Follower.findAll(query);
   user.following = following;
-  user.posts = await getUserPosts(id);
+  user.posts = await getUserPosts(event,id);
   Object.assign(user, defaultValues);
 
   const token = await generateAuthToken(payload);
@@ -160,13 +157,13 @@ const currentUserInfo = async (event, context) => {
 const userInfoByUsername: APIHandler = async (event, context) => {
   const { username } = event.pathParameters;
 
-  const user = await User.findOne({ where: { username }, raw: true });
+  const user = await event.db.User.findOne({ where: { username }, raw: true });
   if (user == null) {
     return MessageUtil.success({ success: false, msg: `user ${username} not found` });
   }
-  const posts = await getUserPosts(user.id);
+  const posts = await getUserPosts(event,user.id);
   const query = { where: { ownerId: user.id }, attributes: ['targetId'] };
-  const following = await db.Follower.findAll(query);
+  const following = await event.db.Follower.findAll(query);
   user.following = following.map((f) => f.targetId);
   Object.assign(user, defaultValues);
   user.posts = posts;
@@ -190,7 +187,7 @@ const update: APIHandler = async (event, context) => {
     fields.password = getPasswordHash(postInput.password);
   }
 
-  return User.update(fields, { where: { id } })
+  return event.db.User.update(fields, { where: { id } })
     .then((user) => MessageUtil.success({ message: 'User updated' }))
     .catch((err) => {
       return MessageUtil.error(500, err)
@@ -201,16 +198,16 @@ const deleteUser: APIHandler = (event, context) => {
   const id = event.pathParameters.userId;
 
 
-  return User.destroy({ where: { id } })
+  return event.db.User.destroy({ where: { id } })
     .then(() => MessageUtil.success({ msg: 'User has been deleted successfully!' }))
     .catch((err) => { return MessageUtil.error(500, { msg: 'Failed to delete!' }) });
 };
 
-export const routeCreate = inputParser(create)
-export const routeLogin = inputParser(login)
-export const routeUserInfo = authenticateUser(currentUserInfo)
-export const routeFindAll = authenticateUser(findAllUsers)
-export const routeFind = authenticateUser(userInfoByUsername)
-export const routeUserUpdate = authenticateUser(inputParser(update))
-export const routeUserDelete = authenticateUser(deleteUser)
+export const routeCreate = inputParser(addSequelize(create))
+export const routeLogin = inputParser(addSequelize(login))
+export const routeUserInfo = addSequelize(authenticateUser(currentUserInfo))
+export const routeFindAll = addSequelize(authenticateUser(findAllUsers))
+export const routeFind = addSequelize(authenticateUser(userInfoByUsername))
+export const routeUserUpdate = addSequelize(authenticateUser(inputParser(update)))
+export const routeUserDelete = addSequelize(authenticateUser(deleteUser))
 

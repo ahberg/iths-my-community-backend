@@ -118,19 +118,17 @@ functions:
           path: api/user/posts
           method: GET
           cors: true
-  
-  followCreate:
-    handler: build/controllers/follow.routeFollow
+  follow:
+    handler: build/controllers/follow.route
     events:
       - http:
          path: api/follow/{targetUserId}
          method: POST
          cors: true 
-
-  followDelete:
-    handler: build/controllers/follow.routeUnFollow
+  unFollow:
+    handler: build/controllers/follow.route
     events:
       - http:
-          path: api/follow/{targetUserId}
-          method: DELETE
-          cors: true 
+         path: api/follow/{targetUserId}
+         method: DELETE
+         cors: true 

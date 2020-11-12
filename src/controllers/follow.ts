@@ -1,20 +1,28 @@
-import db from "../models"
-import { inputParser,authenticateUser } from "../services/middleware";
+import { inputParser, authenticateUser, addSequelize } from "../services/middleware";
 import { APIGatewayEvent } from 'aws-lambda'
 import { MessageUtil } from '../services/message'
-const Follow = db.Follower 
 
-const follow = async(event:APIGatewayEvent) => {
-    const follow = await Follow.create({ownerId:event.user.id,targetId:event.pathParameters.targetUserId})
-    return MessageUtil.success({success:true,follow:follow.dataValues})
-} 
+const follow = async (event: APIGatewayEvent) => {
+    const follow = await event.db.Follower.create({ ownerId: event.user.id, targetId: event.pathParameters.targetUserId })
+    return MessageUtil.success({ success: true, follow: follow.dataValues })
+}
 
-const unFollow = async(event: APIGatewayEvent) => {
-    const follow = await Follow.findOne({where:{ownerId:event.user.id,targetId:event.pathParameters.targetUserId}})
-    follow.destroy();
-    return MessageUtil.success({success:true,follow:false})
-} 
+const unFollow = async (event: APIGatewayEvent) => {
+    const follow = await event.db.Follower.findOne({ where: { ownerId: event.user.id, targetId: event.pathParameters.targetUserId } })
+    await follow.destroy();
+    return MessageUtil.success({ success: true, follow: false })
+}
+
+const setFollow = async (event: APIGatewayEvent) => {
+    switch (event.httpMethod) {
+        case ('POST'): {
+            return follow(event)
+        }
+        case ('DELETE'): {
+            return unFollow(event)
+        }
+    }
+}
 
 
-export const routeFollow = authenticateUser(follow)
-export const routeUnFollow = authenticateUser(unFollow)
+export const route = addSequelize(authenticateUser(setFollow))
