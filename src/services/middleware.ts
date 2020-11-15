@@ -55,6 +55,7 @@ function inputParser(handlerFunction: any) {
 
 function addSequelize(handlerFunction: any) {
     return async (event: APIGatewayEvent) => {
+
         const db = await dbPromise();
         event.db = db
         try {

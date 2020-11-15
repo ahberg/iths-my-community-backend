@@ -16,7 +16,7 @@ async function loadSequelize() {
     dialectModule: mysql2, // Needed to fix sequelize issues with WebPack
 
     pool: {
-      max: 10,
+      max: 100,
       min: 0,
       acquire: 2000,
       idle: 0,

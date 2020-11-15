@@ -6,19 +6,34 @@ provider:
   name: aws
   runtime: nodejs12.x
   region: eu-north-1
-  stage: prod
+  stage: ${opt:stage}
   memorySize: 512
   timeout: 30
+  environment: ${file(./env.${self:provider.stage}.yml)}
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb:Query
+        - dynamodb:Scan
+        - dynamodb:GetItem
+        - dynamodb:PutItem
+        - dynamodb:UpdateItem
+        - dynamodb:DeleteItem
+      Resource: "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.DYNAMODB_TABLE}"
 
 package:
   exclude:
-    - '**'
-    - '!node_modules/**'
-  include:
-    - build/**
-  
+    - 'src/**'
+    - 'node_modules/**'
+    - '*'
+    - '.vscode/**'
+
+layers:
+  nodeModules:
+    path: layerNodeModules # required, path to layer contents on disk
+    name: ${opt:stage, self:provider.stage, 'dev'}-node-modules # 
+
 plugins:
-  - serverless-dotenv-plugin
   - serverless-vpc-discovery
   - serverless-offline
 
@@ -26,10 +41,7 @@ plugins:
 custom:
   serverless-offline:
     httpPort: 3009
-    lambdaPort: 3004
-  dotenv:
-    required:
-      file: true
+    lambdaPort: 3004  
   vpc:
     vpcName: "my-lambda-vpc"
     subnetNames:
@@ -51,10 +63,13 @@ resources:
         RestApiId:
           Ref: 'ApiGatewayRestApi'
 
+
 functions:
 
   userCreate:
     handler: build/controllers/user.routeCreate
+    layers:
+     - { Ref: NodeModulesLambdaLayer }
     events:
       - http:
           path: 'api/user'
@@ -63,6 +78,8 @@ functions:
 
   userLogin:
     handler: build/controllers/user.routeLogin
+    layers:
+     - { Ref: NodeModulesLambdaLayer }
     events:
       - http:
           path: 'api/user/login'
@@ -70,6 +87,8 @@ functions:
           cors: true 
   userInfo:
     handler: build/controllers/user.routeUserInfo
+    layers:
+     - { Ref: NodeModulesLambdaLayer }
     events:
       - http:
           path: 'api/user/info'
@@ -77,6 +96,8 @@ functions:
           cors: true 
   userUpdate:
     handler: build/controllers/user.routeUserUpdate
+    layers:
+     - { Ref: NodeModulesLambdaLayer }
     events:
       - http:
           path: 'api/users/{userId}'
@@ -84,6 +105,8 @@ functions:
           cors: true 
   userFindAll:
     handler: build/controllers/user.routeFindAll
+    layers:
+     - { Ref: NodeModulesLambdaLayer }
     events:
       - http:
           path: 'api/users'
@@ -91,6 +114,8 @@ functions:
           cors: true
   userFind:
     handler: build/controllers/user.routeFind
+    layers:
+     - { Ref: NodeModulesLambdaLayer }
     events:
       - http:
           path: 'api/profile/{username}'
@@ -99,6 +124,8 @@ functions:
   
   postCreate:
     handler: build/controllers/post.routeCreate
+    layers:
+     - { Ref: NodeModulesLambdaLayer }
     events:
        - http:
            path: api/post
@@ -106,6 +133,8 @@ functions:
            cors: true
   postDelete:
     handler: build/controllers/post.routeDelete
+    layers:
+     - { Ref: NodeModulesLambdaLayer }
     events:
        - http:
            path: api/post/{postId}
@@ -113,6 +142,8 @@ functions:
            cors: true
   postUser:
     handler: build/controllers/post.routeUserPosts
+    layers:
+     - { Ref: NodeModulesLambdaLayer }
     events:
       - http:
           path: api/user/posts
@@ -120,6 +151,8 @@ functions:
           cors: true
   follow:
     handler: build/controllers/follow.route
+    layers:
+     - { Ref: NodeModulesLambdaLayer }
     events:
       - http:
          path: api/follow/{targetUserId}
@@ -127,8 +160,20 @@ functions:
          cors: true 
   unFollow:
     handler: build/controllers/follow.route
+    layers:
+      - { Ref: NodeModulesLambdaLayer }
     events:
       - http:
          path: api/follow/{targetUserId}
          method: DELETE
          cors: true 
+  test:
+    handler: build/controllers/testDynamoDB.runTest
+    layers:
+      - { Ref: NodeModulesLambdaLayer }
+    events:
+      - http:
+         path: api/testing1973
+         method: POST
+         cors: true 
+    
