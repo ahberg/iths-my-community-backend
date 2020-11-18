@@ -12,11 +12,12 @@ import { MessageUtil } from '../services/message'
 import { DynamoDB } from 'aws-sdk';
 import * as uuid from 'uuid'
 
-const DB = new DynamoDB.DocumentClient()
-const TableName = process.env.DYNAMODB_TABLE
+
+const DB = new DynamoDB.DocumentClient({params: {TableName: process.env.DYNAMODB_TABLE}});
+
 
 const defaultValues = {
-  // following: [],
+  following: [],
   followers: [],
   password: '',
   profileImg: '/static/img/default-user-profile-img.png',
@@ -30,7 +31,6 @@ const getPasswordHash = (password) => {
 
 const findUserByUsername = async (username: string) => {
   const search = {
-    TableName: process.env.DYNAMODB_TABLE,
     IndexName: 'usernameGSI',
     KeyConditionExpression: "username = :v_username",
     ExpressionAttributeValues: {
@@ -106,7 +106,6 @@ const login: APIHandler = async (event, context) => {
   }
   const { username, password } = postInput;
   const search = {
-    TableName: process.env.DYNAMODB_TABLE,
     IndexName: 'usernameGSI',
     KeyConditionExpression: "username = :v_username",
     ExpressionAttributeValues: {
@@ -140,16 +139,16 @@ const login: APIHandler = async (event, context) => {
 
 // fetch all users
 const findAllUsers: APIHandler = async (event, context) => {
-  const { Op } = require('sequelize');
   const search = {
-    where: {
-      id: { [Op.ne]: event.user.id },
-    },
-    raw: true,
-  };
-  const results = await event.db.User.findAll(search);
-  const users = results;
+    FilterExpression: 'NOT id = :uuid',
+    ExpressionAttributeValues: {':uuid': event.user.id},
+    //ProjectionExpression: 'id, username'
+
+  }
+  const results = await DB.scan(search).promise();
+  const users = results.Items;
   users.forEach((u) => {
+    u.password = '',
     Object.assign(u, defaultValues);
   });
   return MessageUtil.success({ success: true, users });
@@ -187,14 +186,14 @@ const currentUserInfo = async (event, context) => {
 const userInfoByUsername: APIHandler = async (event, context) => {
   const { username } = event.pathParameters;
 
-  const user = await event.db.User.findOne({ where: { username }, raw: true });
+  const user = await findUserByUsername(username)
   if (user == null) {
     return MessageUtil.success({ success: false, msg: `user ${username} not found` });
   }
   const posts = await getUserPosts(event, user.id);
   const query = { where: { ownerId: user.id }, attributes: ['targetId'] };
-  const following = await event.db.Follower.findAll(query);
-  user.following = following.map((f) => f.targetId);
+  //const following = await event.db.Follower.findAll(query);
+  //user.following = following.map((f) => f.targetId);
   Object.assign(user, defaultValues);
   user.posts = posts;
   return MessageUtil.success({ success: true, user });
@@ -202,10 +201,10 @@ const userInfoByUsername: APIHandler = async (event, context) => {
 
 // update a user's info
 const update: APIHandler = async (event, context) => {
-  type Input = { [key: string]: { prop: any } };
+  type Input = { [key: string]: { prop: string } };
   const postInput: any = event.body
   const fields: Input = {};
-  const id = event.pathParameters.userId;
+  const id = event.queryStringParameters.id
 
   if (typeof postInput.name !== 'undefined') {
     fields.name = postInput.name;
@@ -216,19 +215,22 @@ const update: APIHandler = async (event, context) => {
   if (typeof postInput.password !== 'undefined') {
     fields.password = getPasswordHash(postInput.password);
   }
-
-  return event.db.User.update(fields, { where: { id } })
-    .then((user) => MessageUtil.success({ message: 'User updated' }))
+  const update = {
+    Item:fields,
+    Key: {
+      id: id,
+    }
+  }
+  return DB.update(update).promise()
+    .then((user) => MessageUtil.success({ message: 'User updated', update:fields }))
     .catch((err) => {
       return MessageUtil.error(500, err)
     });
 };
 // delete a user
 const deleteUser: APIHandler = (event, context) => {
-  const id = event.pathParameters.userId;
-
-
-  return event.db.User.destroy({ where: { id } })
+  const id = event.user.id;
+  return DB.delete({ Key: { id: id } }).promise()
     .then(() => MessageUtil.success({ msg: 'User has been deleted successfully!' }))
     .catch((err) => { return MessageUtil.error(500, { msg: 'Failed to delete!' }) });
 };
