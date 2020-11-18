@@ -2,6 +2,7 @@ import dbPromise from '../models'
 import jwt from 'jsonwebtoken';
 import { APIGatewayProxyHandler, APIGatewayProxyResult, APIGatewayEvent, Context } from "aws-lambda";
 import { MessageUtil } from './message';
+import { DynamoDB } from 'aws-sdk';
 
 
 
@@ -9,16 +10,24 @@ import { MessageUtil } from './message';
 // opts.audience = 'yoursite.net';
 const authenticateUser = (handlerFunction: any) => {
     return async (event: APIGatewayEvent) => {
+        const DB = new DynamoDB.DocumentClient()
+    
         try {
             const payload = jwt.verify(extractTokenFromHeader(event.headers.Authorization), process.env.SECRET);
-            event.user = await event.db.User.findOne({ where: { id: payload.id } })
+            const  params  = {
+                TableName:process.env.DYNAMODB_TABLE,
+                Key: {
+                    id:payload.id
+                }
+            }
+            const result  = await DB.get(params).promise()
+            event.user  = result.Item
             return handlerFunction(event)
         } catch (error) {
-            if (error.name === 'JsonWebTokenError') {
+             if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError') {
                 return unauthorized()
-            }
-            console.error(error)
-            return MessageUtil.error(500, { message: 'Server error' });
+            } 
+            return MessageUtil.error(500, { message: error});
         }
     }
 }

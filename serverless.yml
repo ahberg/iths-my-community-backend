@@ -9,7 +9,7 @@ provider:
   stage: ${opt:stage}
   memorySize: 512
   timeout: 30
-  environment: ${file(./env.${self:provider.stage}.yml)}
+  environment: ${file(./.env.${self:provider.stage}.yml)}
   iamRoleStatements:
     - Effect: Allow
       Action:
@@ -23,25 +23,24 @@ provider:
 
 package:
   exclude:
-    - 'src/**'
-    - 'node_modules/**'
-    - '*'
-    - '.vscode/**'
+    - "src/**"
+    - "node_modules/**"
+    - "*"
+    - ".vscode/**"
 
 layers:
   nodeModules:
     path: layerNodeModules # required, path to layer contents on disk
-    name: ${opt:stage, self:provider.stage, 'dev'}-node-modules # 
+    name: ${opt:stage, self:provider.stage, 'dev'}-node-modules #
 
 plugins:
   - serverless-vpc-discovery
   - serverless-offline
 
-
 custom:
   serverless-offline:
     httpPort: 3009
-    lambdaPort: 3004  
+    lambdaPort: 3004
   vpc:
     vpcName: "my-lambda-vpc"
     subnetNames:
@@ -54,96 +53,120 @@ custom:
 resources:
   Resources:
     GatewayResponseDefault4XX:
-      Type: 'AWS::ApiGateway::GatewayResponse'
+      Type: "AWS::ApiGateway::GatewayResponse"
       Properties:
         ResponseParameters:
           gatewayresponse.header.Access-Control-Allow-Origin: "'*'"
           gatewayresponse.header.Access-Control-Allow-Headers: "'*'"
         ResponseType: DEFAULT_4XX
         RestApiId:
-          Ref: 'ApiGatewayRestApi'
-
+          Ref: "ApiGatewayRestApi"
+    myCommunityUser1:
+      Type: "AWS::DynamoDB::Table"
+      DeletionPolicy: Retain
+      Properties:
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+          - AttributeName: username
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+        GlobalSecondaryIndexes:
+          - IndexName: usernameGSI
+            KeySchema:
+              - AttributeName: username
+                KeyType: HASH
+            ProvisionedThroughput:
+              ReadCapacityUnits: 1
+              WriteCapacityUnits: 1
+            Projection:
+              ProjectionType: "ALL"
+        TableName: ${self:provider.environment.DYNAMODB_TABLE}
 
 functions:
-
   userCreate:
     handler: build/controllers/user.routeCreate
     layers:
-     - { Ref: NodeModulesLambdaLayer }
+      - { Ref: NodeModulesLambdaLayer }
     events:
       - http:
-          path: 'api/user'
+          path: "api/user"
           method: POST
-          cors: true 
+          cors: true
 
   userLogin:
     handler: build/controllers/user.routeLogin
     layers:
-     - { Ref: NodeModulesLambdaLayer }
+      - { Ref: NodeModulesLambdaLayer }
     events:
       - http:
-          path: 'api/user/login'
+          path: "api/user/login"
           method: POST
-          cors: true 
+          cors: true
   userInfo:
     handler: build/controllers/user.routeUserInfo
     layers:
-     - { Ref: NodeModulesLambdaLayer }
+      - { Ref: NodeModulesLambdaLayer }
     events:
       - http:
-          path: 'api/user/info'
+          path: "api/user/info"
           method: GET
-          cors: true 
+          cors: true
   userUpdate:
     handler: build/controllers/user.routeUserUpdate
     layers:
-     - { Ref: NodeModulesLambdaLayer }
+      - { Ref: NodeModulesLambdaLayer }
     events:
       - http:
-          path: 'api/users/{userId}'
-          method: 'PUT'
-          cors: true 
+          path: "api/users/{userId}"
+          method: "PUT"
+          cors: true
   userFindAll:
     handler: build/controllers/user.routeFindAll
     layers:
-     - { Ref: NodeModulesLambdaLayer }
+      - { Ref: NodeModulesLambdaLayer }
     events:
       - http:
-          path: 'api/users'
+          path: "api/users"
           method: GET
           cors: true
   userFind:
     handler: build/controllers/user.routeFind
     layers:
-     - { Ref: NodeModulesLambdaLayer }
+      - { Ref: NodeModulesLambdaLayer }
     events:
       - http:
-          path: 'api/profile/{username}'
+          path: "api/profile/{username}"
           method: GET
           cors: true
-  
+
   postCreate:
     handler: build/controllers/post.routeCreate
     layers:
-     - { Ref: NodeModulesLambdaLayer }
+      - { Ref: NodeModulesLambdaLayer }
     events:
-       - http:
-           path: api/post
-           method: POST
-           cors: true
+      - http:
+          path: api/post
+          method: POST
+          cors: true
   postDelete:
     handler: build/controllers/post.routeDelete
     layers:
-     - { Ref: NodeModulesLambdaLayer }
+      - { Ref: NodeModulesLambdaLayer }
     events:
-       - http:
-           path: api/post/{postId}
-           method: DELETE
-           cors: true
+      - http:
+          path: api/post/{postId}
+          method: DELETE
+          cors: true
   postUser:
     handler: build/controllers/post.routeUserPosts
     layers:
-     - { Ref: NodeModulesLambdaLayer }
+      - { Ref: NodeModulesLambdaLayer }
     events:
       - http:
           path: api/user/posts
@@ -152,28 +175,27 @@ functions:
   follow:
     handler: build/controllers/follow.route
     layers:
-     - { Ref: NodeModulesLambdaLayer }
+      - { Ref: NodeModulesLambdaLayer }
     events:
       - http:
-         path: api/follow/{targetUserId}
-         method: POST
-         cors: true 
+          path: api/follow/{targetUserId}
+          method: POST
+          cors: true
   unFollow:
     handler: build/controllers/follow.route
     layers:
       - { Ref: NodeModulesLambdaLayer }
     events:
       - http:
-         path: api/follow/{targetUserId}
-         method: DELETE
-         cors: true 
-  test:
+          path: api/follow/{targetUserId}
+          method: DELETE
+          cors: true
+  testRoute:
     handler: build/controllers/testDynamoDB.runTest
     layers:
       - { Ref: NodeModulesLambdaLayer }
     events:
       - http:
-         path: api/testing1973
-         method: POST
-         cors: true 
-    
+          path: api/testing2000
+          method: POST
+          cors: true

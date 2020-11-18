@@ -1,7 +1,7 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { getUserPosts } from './post';
-import { inputParser,authenticateUser,addSequelize } from '../services/middleware'
+import { inputParser, authenticateUser, addSequelize } from '../services/middleware'
 
 // load input validation
 import validateRegisterForm from '../validation/register';
@@ -9,7 +9,11 @@ import validateLoginForm from '../validation/login';
 
 import { APIGatewayProxyHandler as APIHandler } from 'aws-lambda'
 import { MessageUtil } from '../services/message'
+import { DynamoDB } from 'aws-sdk';
+import * as uuid from 'uuid'
 
+const DB = new DynamoDB.DocumentClient()
+const TableName = process.env.DYNAMODB_TABLE
 
 const defaultValues = {
   // following: [],
@@ -24,8 +28,25 @@ const getPasswordHash = (password) => {
   return bcrypt.hashSync(password, salt);
 };
 
+const findUserByUsername = async (username: string) => {
+  const search = {
+    TableName: process.env.DYNAMODB_TABLE,
+    IndexName: 'usernameGSI',
+    KeyConditionExpression: "username = :v_username",
+    ExpressionAttributeValues: {
+      ":v_username": username
+    }
+  }
+
+  const result = await DB.query(search).promise();
+  if(result.Items.length) {
+    return result.Items[0]
+  } 
+  return null
+}
+
 const generateAuthToken = async (payload) => {
-  const token =  jwt.sign(
+  const token = jwt.sign(
     payload,
     process.env.SECRET,
     {
@@ -48,44 +69,53 @@ const create: APIHandler = async (event, context) => {
     const message = Object.values(errors)[0];
     return MessageUtil.success({ success: false, message })
   }
+  const user = await findUserByUsername(username)
+  if (user) {
+    return MessageUtil.error(400, { success: false, message: 'Username already exists!' })
+  }
 
-  return event.db.User.findAll({ where: { username } }).then((user) => {
-    if (user.length) {
-      return MessageUtil.error(400, { success: false, message: 'Username already exists!' })
-    }
-    const newUser = {
-      username,
-      name,
-      password,
-      bio,
-    };
-    newUser.password = getPasswordHash(newevent.db.User.password)
-    return event.db.User.create(newUser).then((user) => {
-      return MessageUtil.success({ success: true, user });
-    })
-      .catch((err) => {
-        return MessageUtil.error(500, { success: false, message: err });
-      });
+  const newUser = {
+    id:uuid.v4(),
+    username,
+    name,
+    password,
+    bio,
+  };
+  newUser.password = getPasswordHash(newUser.password)
 
+  const put = {
+    TableName,
+    Item: newUser
+  }
+  return DB.put(put).promise().then((R) => {
+    return MessageUtil.success({ success: true, user });
+  }).catch((e) => {
+    return MessageUtil.error(500, { success: false, message: e });
   });
-};
+
+}
 
 const login: APIHandler = async (event, context) => {
   const postInput: any = event.body
   const { errors, isValid } = validateLoginForm(postInput);
+
 
   // check validation
   if (!isValid) {
     return MessageUtil.error(400, errors);
   }
   const { username, password } = postInput;
+  const search = {
+    TableName: process.env.DYNAMODB_TABLE,
+    IndexName: 'usernameGSI',
+    KeyConditionExpression: "username = :v_username",
+    ExpressionAttributeValues: {
+      ":v_username": username
+    }
+  }
 
-  const user = await event.db.User.findOne({
-    where: {
-      username,
-    },
-  });
-
+  const result = await DB.query(search).promise();
+  const user = result.Items[0]
 
   // check for user
   if (!user) {
@@ -93,7 +123,7 @@ const login: APIHandler = async (event, context) => {
     return MessageUtil.error(404, errors);
   }
 
-  const originalPassword = user.dataValues.password;
+  const originalPassword = user.password;
   // check for password
   return bcrypt
     .compare(password, originalPassword)
@@ -126,10 +156,10 @@ const findAllUsers: APIHandler = async (event, context) => {
 };
 
 const currentUserInfo = async (event, context) => {
-  const user = event.user.dataValues;
+  const user = event.user;
   const { id, username } = user;
   const payload = { id, username }; // jwt payload
-  const query = {
+ /*  const query = {
     raw: true,
     where: { ownerId: id },
     attributes: [
@@ -146,7 +176,7 @@ const currentUserInfo = async (event, context) => {
   };
   const following = await event.db.Follower.findAll(query);
   user.following = following;
-  user.posts = await getUserPosts(event,id);
+  user.posts = await getUserPosts(event, id); */
   Object.assign(user, defaultValues);
 
   const token = await generateAuthToken(payload);
@@ -161,7 +191,7 @@ const userInfoByUsername: APIHandler = async (event, context) => {
   if (user == null) {
     return MessageUtil.success({ success: false, msg: `user ${username} not found` });
   }
-  const posts = await getUserPosts(event,user.id);
+  const posts = await getUserPosts(event, user.id);
   const query = { where: { ownerId: user.id }, attributes: ['targetId'] };
   const following = await event.db.Follower.findAll(query);
   user.following = following.map((f) => f.targetId);
