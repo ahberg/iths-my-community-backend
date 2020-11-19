@@ -13,7 +13,7 @@ import { DynamoDB } from 'aws-sdk';
 import * as uuid from 'uuid'
 
 
-const DB = new DynamoDB.DocumentClient({params: {TableName: process.env.DYNAMODB_TABLE}});
+const DB = new DynamoDB.DocumentClient({params: {TableName: process.env.DYNAMODB_TABLE_USER}});
 
 
 const defaultValues = {
@@ -174,8 +174,8 @@ const currentUserInfo = async (event, context) => {
     }],
   };
   const following = await event.db.Follower.findAll(query);
-  user.following = following;
-  user.posts = await getUserPosts(event, id); */
+  user.following = following;*/
+  user.posts = await getUserPosts(event, id); 
   Object.assign(user, defaultValues);
 
   const token = await generateAuthToken(payload);
@@ -191,7 +191,6 @@ const userInfoByUsername: APIHandler = async (event, context) => {
     return MessageUtil.success({ success: false, msg: `user ${username} not found` });
   }
   const posts = await getUserPosts(event, user.id);
-  const query = { where: { ownerId: user.id }, attributes: ['targetId'] };
   //const following = await event.db.Follower.findAll(query);
   //user.following = following.map((f) => f.targetId);
   Object.assign(user, defaultValues);
@@ -204,7 +203,7 @@ const update: APIHandler = async (event, context) => {
   type Input = { [key: string]: { prop: string } };
   const postInput: any = event.body
   const fields: Input = {};
-  const id = event.queryStringParameters.id
+  const id = event.user.id
 
   if (typeof postInput.name !== 'undefined') {
     fields.name = postInput.name;

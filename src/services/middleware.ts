@@ -15,7 +15,7 @@ const authenticateUser = (handlerFunction: any) => {
         try {
             const payload = jwt.verify(extractTokenFromHeader(event.headers.Authorization), process.env.SECRET);
             const  params  = {
-                TableName:process.env.DYNAMODB_TABLE,
+                TableName:process.env.DYNAMODB_TABLE_USER,
                 Key: {
                     id:payload.id
                 }
