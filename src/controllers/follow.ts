@@ -1,17 +1,39 @@
 import { inputParser, authenticateUser, addSequelize } from "../services/middleware";
 import { APIGatewayEvent } from 'aws-lambda'
 import { MessageUtil } from '../services/message'
+import { DynamoDB } from "aws-sdk";
+const DB = new DynamoDB.DocumentClient({ params: { TableName: process.env.DYNAMODB_TABLE_USER } });
 
 const follow = async (event: APIGatewayEvent) => {
-    const follow = await event.db.Follower.create({ ownerId: event.user.id, targetId: event.pathParameters.targetUserId })
-    return MessageUtil.success({ success: true, follow: follow.dataValues })
+    const id = event.user.id;
+    const update = {
+        Key: {
+            id: id,
+        },
+        UpdateExpression: "ADD following :v",
+        ExpressionAttributeValues: {
+            ":v": DB.createSet(event.pathParameters.targetUserId)
+        }
+    }
+    DB.update(update).promise()
+    return MessageUtil.success({ success: true, targetId: event.pathParameters.targetUserId })
 }
 
 const unFollow = async (event: APIGatewayEvent) => {
-    const follow = await event.db.Follower.findOne({ where: { ownerId: event.user.id, targetId: event.pathParameters.targetUserId } })
-    await follow.destroy();
-    return MessageUtil.success({ success: true, follow: false })
+    const id = event.user.id;
+    const update = {
+        Key: {
+            id: id,
+        },
+        UpdateExpression: "DELETE following :v",
+        ExpressionAttributeValues: {
+            ":v": DB.createSet(event.pathParameters.targetUserId)
+        }
+    }
+    DB.update(update).promise()
+    return MessageUtil.success({ success: true, targetId: event.pathParameters.targetUserId })
 }
+
 
 const setFollow = async (event: APIGatewayEvent) => {
     switch (event.httpMethod) {

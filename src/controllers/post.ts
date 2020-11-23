@@ -12,9 +12,10 @@ const getUserPosts = async (event:APIGatewayEvent,userId: number,following = [])
   let posts = [];
   following.push(userId);
   const search = {
-    KeyConditionExpression: "userId = :v_userId",
+    KeyConditionExpression: "userId = :v_userId AND userId = :uid2",
     ExpressionAttributeValues: {
-      ":v_userId": userId
+      ":v_userId": userId,
+      ':uid2': 'e3840e29-9a61-47d8-933b-9d40dd77849b'
     }
   }
   const result = await DB.query(search).promise();

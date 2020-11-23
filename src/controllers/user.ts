@@ -11,13 +11,13 @@ import { APIGatewayProxyHandler as APIHandler } from 'aws-lambda'
 import { MessageUtil } from '../services/message'
 import { DynamoDB } from 'aws-sdk';
 import * as uuid from 'uuid'
+import { json } from 'sequelize/types';
 
 
 const DB = new DynamoDB.DocumentClient({params: {TableName: process.env.DYNAMODB_TABLE_USER}});
 
 
 const defaultValues = {
-  following: [],
   followers: [],
   password: '',
   profileImg: '/static/img/default-user-profile-img.png',
@@ -155,25 +155,33 @@ const findAllUsers: APIHandler = async (event, context) => {
 
 const currentUserInfo = async (event, context) => {
   const user = event.user;
+  const TableName = process.env.DYNAMODB_TABLE_USER
+  let followingIds = []
+  if(typeof user.following == 'object') {
+    
+    let queryParams = {RequestItems: {}};
+    followingIds = user.following.values
+
+    queryParams.RequestItems[TableName] = {
+      Keys: followingIds.reduce((a,c,i) => {
+        a[i] = {'id': c}
+        return a
+     },[]),
+     ExpressionAttributeNames: {
+       '#n': 'name'
+     },
+     ProjectionExpression: 'id, username, #n'
+   } 
+   const results = await DB.batchGet(queryParams).promise();
+   console.log((results.Responses[TableName]))
+   user.following = results.Responses.[TableName]
+  } else {
+    user.following = []
+  }
   const { id, username } = user;
   const payload = { id, username }; // jwt payload
- /*  const query = {
-    raw: true,
-    where: { ownerId: id },
-    attributes: [
-      ['targetId', 'id'],
-      'target.username',
-      'target.name',
-    ],
-    include: [{
-      model: event.db.User,
-      as: 'target',
-      attributes: [],
+  //const results = await DB.scan(search).promise();
 
-    }],
-  };
-  const following = await event.db.Follower.findAll(query);
-  user.following = following;*/
 
   user.posts = await getUserPosts(event, id); 
   Object.assign(user, defaultValues);
@@ -193,6 +201,7 @@ const userInfoByUsername: APIHandler = async (event, context) => {
   const posts = await getUserPosts(event, user.id);
   //const following = await event.db.Follower.findAll(query);
   //user.following = following.map((f) => f.targetId);
+  user.following = []
   Object.assign(user, defaultValues);
   user.posts = posts;
   return MessageUtil.success({ success: true, user });
