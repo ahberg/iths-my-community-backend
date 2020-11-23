@@ -1,4 +1,3 @@
-import dbPromise from '../models'
 import jwt from 'jsonwebtoken';
 import { APIGatewayProxyHandler, APIGatewayProxyResult, APIGatewayEvent, Context } from "aws-lambda";
 import { MessageUtil } from './message';
@@ -65,13 +64,13 @@ function inputParser(handlerFunction: any) {
 function addSequelize(handlerFunction: any) {
     return async (event: APIGatewayEvent) => {
 
-        const db = await dbPromise();
-        event.db = db
+    /*     const db = await dbPromise();
+        event.db = db */
         try {
             return await handlerFunction(event)
         }
         finally {
-            await db.sequelize.connectionManager.close();
+            //await db.sequelize.connectionManager.close();
         }
     };
 }

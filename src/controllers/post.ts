@@ -57,7 +57,7 @@ const userPosts = async (event :APIGatewayEvent) => {
  return MessageUtil.success({ success: true, posts: posts});
 };
 
-export const routeCreate = addSequelize(authenticateUser(inputParser(create)))
-export const routeDelete = addSequelize(authenticateUser(deletePost))
-export const routeUserPosts = addSequelize(authenticateUser(userPosts))
+export const routeCreate = authenticateUser(inputParser(create))
+export const routeDelete = authenticateUser(deletePost)
+export const routeUserPosts = authenticateUser(userPosts)
 export {getUserPosts} 

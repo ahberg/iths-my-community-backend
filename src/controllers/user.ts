@@ -84,7 +84,6 @@ const create: APIHandler = async (event, context) => {
   newUser.password = getPasswordHash(newUser.password)
 
   const put = {
-    TableName,
     Item: newUser
   }
   return DB.put(put).promise().then((R) => {
@@ -175,6 +174,7 @@ const currentUserInfo = async (event, context) => {
   };
   const following = await event.db.Follower.findAll(query);
   user.following = following;*/
+
   user.posts = await getUserPosts(event, id); 
   Object.assign(user, defaultValues);
 
@@ -234,11 +234,11 @@ const deleteUser: APIHandler = (event, context) => {
     .catch((err) => { return MessageUtil.error(500, { msg: 'Failed to delete!' }) });
 };
 
-export const routeCreate = inputParser(addSequelize(create))
-export const routeLogin = inputParser(addSequelize(login))
-export const routeUserInfo = addSequelize(authenticateUser(currentUserInfo))
-export const routeFindAll = addSequelize(authenticateUser(findAllUsers))
-export const routeFind = addSequelize(authenticateUser(userInfoByUsername))
-export const routeUserUpdate = addSequelize(authenticateUser(inputParser(update)))
-export const routeUserDelete = addSequelize(authenticateUser(deleteUser))
+export const routeCreate = inputParser(create)
+export const routeLogin = inputParser(login)
+export const routeUserInfo = authenticateUser(currentUserInfo)
+export const routeFindAll = authenticateUser(findAllUsers)
+export const routeFind = authenticateUser(userInfoByUsername)
+export const routeUserUpdate = authenticateUser(inputParser(update))
+export const routeUserDelete = authenticateUser(deleteUser)
 
