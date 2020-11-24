@@ -173,17 +173,14 @@ const currentUserInfo = async (event, context) => {
      ProjectionExpression: 'id, username, #n'
    } 
    const results = await DB.batchGet(queryParams).promise();
-   console.log((results.Responses[TableName]))
-   user.following = results.Responses.[TableName]
+   user.following = results.Responses[TableName]
   } else {
     user.following = []
   }
   const { id, username } = user;
   const payload = { id, username }; // jwt payload
-  //const results = await DB.scan(search).promise();
-
-
-  user.posts = await getUserPosts(event, id); 
+ 
+  user.posts = await getUserPosts(id); 
   Object.assign(user, defaultValues);
 
   const token = await generateAuthToken(payload);
@@ -198,7 +195,7 @@ const userInfoByUsername: APIHandler = async (event, context) => {
   if (user == null) {
     return MessageUtil.success({ success: false, msg: `user ${username} not found` });
   }
-  const posts = await getUserPosts(event, user.id);
+  const posts = await getUserPosts(user.id);
   //const following = await event.db.Follower.findAll(query);
   //user.following = following.map((f) => f.targetId);
   user.following = []
