@@ -14,7 +14,7 @@ import * as uuid from 'uuid'
 import { json } from 'sequelize/types';
 
 
-const DB = new DynamoDB.DocumentClient({params: {TableName: process.env.DYNAMODB_TABLE_USER}});
+const DB = new DynamoDB.DocumentClient({ params: { TableName: process.env.DYNAMODB_TABLE_USER } });
 
 
 const defaultValues = {
@@ -39,9 +39,9 @@ const findUserByUsername = async (username: string) => {
   }
 
   const result = await DB.query(search).promise();
-  if(result.Items.length) {
+  if (result.Items.length) {
     return result.Items[0]
-  } 
+  }
   return null
 }
 
@@ -75,7 +75,7 @@ const create: APIHandler = async (event, context) => {
   }
 
   const newUser = {
-    id:uuid.v4(),
+    id: uuid.v4(),
     username,
     name,
     password,
@@ -140,7 +140,7 @@ const login: APIHandler = async (event, context) => {
 const findAllUsers: APIHandler = async (event, context) => {
   const search = {
     FilterExpression: 'NOT id = :uuid',
-    ExpressionAttributeValues: {':uuid': event.user.id},
+    ExpressionAttributeValues: { ':uuid': event.user.id },
     //ProjectionExpression: 'id, username'
 
   }
@@ -148,7 +148,7 @@ const findAllUsers: APIHandler = async (event, context) => {
   const users = results.Items;
   users.forEach((u) => {
     u.password = '',
-    Object.assign(u, defaultValues);
+      Object.assign(u, defaultValues);
   });
   return MessageUtil.success({ success: true, users });
 };
@@ -157,30 +157,30 @@ const currentUserInfo = async (event, context) => {
   const user = event.user;
   const TableName = process.env.DYNAMODB_TABLE_USER
   let followingIds = []
-  if(typeof user.following == 'object') {
-    
-    let queryParams = {RequestItems: {}};
+  if (typeof user.following == 'object') {
+
+    let queryParams = { RequestItems: {} };
     followingIds = user.following.values
 
     queryParams.RequestItems[TableName] = {
-      Keys: followingIds.reduce((a,c,i) => {
-        a[i] = {'id': c}
+      Keys: followingIds.reduce((a, c, i) => {
+        a[i] = { 'id': c }
         return a
-     },[]),
-     ExpressionAttributeNames: {
-       '#n': 'name'
-     },
-     ProjectionExpression: 'id, username, #n'
-   } 
-   const results = await DB.batchGet(queryParams).promise();
-   user.following = results.Responses[TableName]
+      }, []),
+      ExpressionAttributeNames: {
+        '#n': 'name'
+      },
+      ProjectionExpression: 'id, username, #n'
+    }
+    const results = await DB.batchGet(queryParams).promise();
+    user.following = results.Responses[TableName]
   } else {
     user.following = []
   }
   const { id, username } = user;
   const payload = { id, username }; // jwt payload
- 
-  user.posts = await getUserPosts(id); 
+
+  user.posts = await getUserPosts(id);
   Object.assign(user, defaultValues);
 
   const token = await generateAuthToken(payload);
@@ -210,6 +210,8 @@ const update: APIHandler = async (event, context) => {
   const postInput: any = event.body
   const fields: Input = {};
   const id = event.user.id
+  let setPassword = false;
+  let setPass = ''
 
   if (typeof postInput.name !== 'undefined') {
     fields.name = postInput.name;
@@ -217,17 +219,38 @@ const update: APIHandler = async (event, context) => {
   if (typeof postInput.bio !== 'undefined') {
     fields.bio = postInput.bio;
   }
+  if (typeof postInput.mail !== 'undefined') {
+    fields.mail = postInput.mail;
+  }
   if (typeof postInput.password !== 'undefined') {
+    setPassword =  true
     fields.password = getPasswordHash(postInput.password);
   }
+
+   const attValues = {
+    ':name': fields.name,
+    ':bio': fields.bio,
+    ':mail': fields.mail,
+   }
+
+   if(setPassword) {
+     attValues[':password'] = fields.password
+     setPass  = ', password = :password'
+   }
+
   const update = {
-    Item:fields,
     Key: {
-      id: id,
-    }
+      id: id
+    },
+    ExpressionAttributeNames: {
+      '#name': 'name'
+    },
+    ExpressionAttributeValues: attValues,
+    UpdateExpression: 'SET #name = :name, bio =  :bio, mail = :mail' + setPass ,
+    ReturnValues: 'ALL_NEW',
   }
   return DB.update(update).promise()
-    .then((user) => MessageUtil.success({ message: 'User updated', update:fields }))
+    .then((user) => MessageUtil.success({ message: 'User updated', user: user }))
     .catch((err) => {
       return MessageUtil.error(500, err)
     });

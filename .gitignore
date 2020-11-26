@@ -4,3 +4,5 @@ build/
 .serverless/
 .vscode/
 layerNodeModules/
+SGS-SES-Docker/.env*
+SGS-SES-Docker/node_modules
