@@ -2,6 +2,7 @@ import { inputParser, authenticateUser, addSequelize } from "../services/middlew
 import { APIGatewayEvent } from 'aws-lambda'
 import { MessageUtil } from '../services/message'
 import { DynamoDB } from 'aws-sdk';
+import sendEmailMesssage from "./email.SQS";
 const DB = new DynamoDB.DocumentClient({ params: { TableName: process.env.DYNAMODB_TABLE_POST } });
 
 const defaultFields = {
@@ -9,6 +10,7 @@ const defaultFields = {
   likes: [],
 };
 const getUserPosts = async (userId: number) => {
+
   let posts = [];
   const search = {
     KeyConditionExpression: "userId = :v_userId",
@@ -34,6 +36,10 @@ const create = (event: APIGatewayEvent) => {
   return DB.put({ Item: newPost }).promise()
     .then(() => {
       let completePost = Object.assign(defaultFields, newPost);
+      const emailTags = completePost.content.split(' ').filter(v=> v === ('#email'))
+      if(emailTags.length) {
+        sendEmailMesssage({content: completePost.content, to:event.user.mail })
+      }
       return MessageUtil.success({ success: true, post: completePost });
     })
     .catch((err) => {

@@ -19,14 +19,17 @@ provider:
         - dynamodb:PutItem
         - dynamodb:UpdateItem
         - dynamodb:DeleteItem
+        - "sqs:SendMessage"
       Resource: 
         - "Fn::GetAtt": [ myCommunityUser1, Arn ]
         - "Fn::Join": ['/', ["Fn::GetAtt": [ myCommunityUser1, Arn ], 'index', '*']]
         - "Fn::GetAtt": [ myCommunityPost, Arn ]
+        - "Fn::GetAtt": [ SQSQueue, Arn ]
 
 package:
   exclude:
     - "src/**"
+    - "SQS-SES-Docker/**"
     - "node_modules/**"
     - "*"
     - ".vscode/**"
@@ -43,7 +46,7 @@ custom:
   serverless-offline:
     httpPort: 3009
     lambdaPort: 3004
-
+  queueName: my-community-queue-dev
 resources: ${file(./resources-dev.yml)} 
 
 
