@@ -1,0 +1,13 @@
+version: '3'
+services:
+ #Nodejs
+  my-community-email-service:
+    build: .
+    image: iths/my-community-email-service
+    container_name: my-community-email-service
+    working_dir: /app
+    volumes:
+       - ./:/app
+    #command: bash -c "yarn install; yarn run dev"
+    env_file: 
+      - ./.env.docker
