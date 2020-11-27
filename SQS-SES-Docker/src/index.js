@@ -1,5 +1,4 @@
 const AWS = require('aws-sdk');
-const { exit } = require('process');
 // Set the region
 
 // Create an SQS service object
@@ -21,14 +20,18 @@ const params = {
 
 async function receiveEmailMessage() {
   console.log('start Receive');
-  const data = await sqs.receiveMessage(params).promise().catch((err) => {
+  const MessageData = await sqs.receiveMessage(params).promise().catch((err) => {
     if (err.stack) {
       console.error('ReceiveMessage error', err);
       process.exit(1);
     }
   });
+ 
+    const EmailMessage = MessageData.Messages[0];
+    console.log(EmailMessage.MessageAttributes)
+  
 
-  console.log(data);
+  
 
   receiveEmailMessage();
   /*   const deleteParams = {
