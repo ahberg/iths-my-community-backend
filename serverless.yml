@@ -19,6 +19,7 @@ provider:
         - dynamodb:PutItem
         - dynamodb:UpdateItem
         - dynamodb:DeleteItem
+        - dynamodb:BatchGetItem
         - "sqs:SendMessage"
       Resource: 
         - "Fn::GetAtt": [ myCommunityUser1, Arn ]
@@ -46,8 +47,7 @@ custom:
   serverless-offline:
     httpPort: 3009
     lambdaPort: 3004
-  queueName: my-community-queue-dev
-resources: ${file(./resources-dev.yml)} 
+resources: ${file(./resources.yml)} 
 
 
 functions:

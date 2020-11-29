@@ -15,7 +15,7 @@ const follow = async (event: APIGatewayEvent) => {
             ":v": DB.createSet(event.pathParameters.targetUserId)
         }
     }
-    DB.update(update).promise()
+    await DB.update(update).promise()
     return MessageUtil.success({ success: true, targetId: event.pathParameters.targetUserId })
 }
 
@@ -30,7 +30,7 @@ const unFollow = async (event: APIGatewayEvent) => {
             ":v": DB.createSet(event.pathParameters.targetUserId)
         }
     }
-    DB.update(update).promise()
+    await DB.update(update).promise()
     return MessageUtil.success({ success: true, targetId: event.pathParameters.targetUserId })
 }
 

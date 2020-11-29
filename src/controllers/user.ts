@@ -11,7 +11,6 @@ import { APIGatewayProxyHandler as APIHandler } from 'aws-lambda'
 import { MessageUtil } from '../services/message'
 import { DynamoDB } from 'aws-sdk';
 import * as uuid from 'uuid'
-import { json } from 'sequelize/types';
 
 
 const DB = new DynamoDB.DocumentClient({ params: { TableName: process.env.DYNAMODB_TABLE_USER } });
