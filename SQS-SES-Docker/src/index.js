@@ -4,19 +4,17 @@ const AWS = require('aws-sdk');
 // Create an SQS service object
 
 const sqs = new AWS.SQS({ apiVersion: '2012-11-05' });
-const queueURL = process.env.SQS_URL;
+
 
 async function sendEmail(email) {
-  // Create sendEmail params
   const params = {
-    Destination: { /* required */
+    Destination: {
       ToAddresses: [
         email.to,
-      /* more items */
       ],
     },
-    Message: { /* required */
-      Body: { /* required */
+    Message: {
+      Body: {
         Text: {
           Charset: 'UTF-8',
           Data: email.body,
@@ -43,6 +41,7 @@ async function sendEmail(email) {
 }
 
 async function receiveEmailMessage() {
+  const queueURL = process.env.SQS_URL;
   const params = {
     AttributeNames: [
       'SentTimestamp',
@@ -52,7 +51,7 @@ async function receiveEmailMessage() {
       'All',
     ],
     QueueUrl: queueURL,
-    WaitTimeSeconds: 20,
+    WaitTimeSeconds: 0,
   };
   console.log('start Receive');
   const MessageData = await sqs.receiveMessage(params).promise().catch((err) => {
@@ -78,7 +77,7 @@ async function receiveEmailMessage() {
       console.log('Delete Error', err);
     });
   }
-  receiveEmailMessage();
 }
-// sendEmail();
+
 receiveEmailMessage();
+

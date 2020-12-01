@@ -14,6 +14,7 @@ RUN yarn install
 # RUN npm ci --only=production
 
 # Bundle app source
-COPY . .
+COPY src .
+
 
 CMD [ "node", "src/index.js" ]
